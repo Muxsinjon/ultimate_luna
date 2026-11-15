@@ -1,5 +1,9 @@
 # LunaWindow project status
 
+## Ultimate Luna review publication
+
+User-authorized destination: https://github.com/Muxsinjon/ultimate_luna. Review site: https://muxsinjon.github.io/ultimate_luna/. The original `new_luna` repository remains unchanged. See [deployment instructions](DEPLOYMENT.md); the local improvement notes below record the preceding implementation phase.
+
 ## Current local improvement pass — 2026-11-15
 
 The separate local implementation based on upstream `42bcf0c` fixes the five reproduced audit defects and adds whole-Moon selection, a simpler dashboard and connected terrain planning. See [local changes, validation and limitations](LOCAL_IMPROVEMENTS.md). Nothing from this pass has been pushed or deployed. Historical milestone completion statements below describe the earlier milestone work; they do not establish physical-headset validation or fresh acceptance of every optional dataset.

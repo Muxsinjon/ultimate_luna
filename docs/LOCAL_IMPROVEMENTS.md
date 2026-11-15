@@ -1,5 +1,7 @@
 # Local usability and reliability improvements
 
+**Publication update:** the user subsequently authorized creating `Muxsinjon/ultimate_luna`, pushing these results and making the website available for review. See [deployment instructions](DEPLOYMENT.md). The local-only statements below describe the completed implementation pass before that authorization.
+
 15 November 2026. Based on `Muxsinjon/new_luna` main `42bcf0cc6cadab40b6e4cdaf9307e192a6837858` and the user's LunaWindow milestone prompt pack. This implementation is in a separate local checkout, `/workspace/lunawindow-improved`. Nothing was pushed, deployed, or published. The original `/workspace/new_luna` checkout was preserved.
 
 ## What changed

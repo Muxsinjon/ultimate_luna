@@ -1,7 +1,7 @@
 name: Deploy to GitHub Pages
 
 on:
-  # Manual only: importing the project must not deploy the website.
+  # Manual deployment: run this workflow when a revision is ready for website review.
   workflow_dispatch:
 
 permissions:

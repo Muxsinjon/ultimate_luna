@@ -1,6 +1,10 @@
 # LunaWindow
 
-**Local improvement pass:** whole-Moon selection, simpler dashboard and audit fixes. See [changes and validation](docs/LOCAL_IMPROVEMENTS.md). This pass is local only; deployment references below describe the existing project.
+**Ultimate Luna:** whole-Moon selection, a simpler dashboard, connected terrain planning and the five audit fixes. See [changes and validation](docs/LOCAL_IMPROVEMENTS.md).
+
+**Review website:** https://muxsinjon.github.io/ultimate_luna/
+
+**Source:** https://github.com/Muxsinjon/ultimate_luna · [Deployment instructions](docs/DEPLOYMENT.md)
 
 **Explore. Compare. Plan. Experience.** Find the right place and time to land on the Moon.
 This project is for the NASA Space Apps Challenge 2026: [Lunar Landing Site Navigator](https://www.spaceappschallenge.org/2026/challenges/lunar-landing-site-navigator/).
@@ -21,14 +25,14 @@ It answers three questions:
 
 It is a preliminary tool and does not certify landing safety.
 
-**Current source (all milestones):** https://github.com/Muxsinjon/new_luna. The older public demo at https://muxsinjon.github.io/lunawindow/ shows the pre-milestone version (no 5 m terrain, first-person view or science layers) and is kept unchanged.
+**Upstream project:** https://github.com/Muxsinjon/new_luna. This repository contains the improved version; the upstream repository remains unchanged. The older public demo at https://muxsinjon.github.io/lunawindow/ shows the pre-milestone version (no 5 m terrain, first-person view or science layers) and is kept unchanged.
 
 **Final demo and release evidence:** [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) · [docs/MILESTONE9_ACCEPTANCE.md](docs/MILESTONE9_ACCEPTANCE.md) · [docs/SUBMISSION.md](docs/SUBMISSION.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ## Workspaces (one shared mission state, in the URL)
 - **Welcome:** choose "Explore landing sites" or "Plan a lunar mission", or **Try the guided demo**, a 10-step walkthrough on real data.
 - **Explore & Compare:**
-  - Site A vs Site B from 17 cited sites (or your own coordinates, or a click on the south-pole map).
+  - Site A vs Site B from 17 cited sites (or your own coordinates, or a click on the rotatable 3D Moon).
   - Mission start, a 1/3/7/14/30-day duration and a shared time bar (previous/next hour, play, speed).
   - Status per site: Sun and Earth azimuth and elevation, visible or not, next rise or set as an hour window.
   - **Sun elevation and Earth elevation vs time** charts for both sites, with a 0° line, tooltips and a synced cursor.
@@ -56,7 +60,7 @@ Header switches:
 ## Visibility models
 | Model | Visible when… | Label shown next to results |
 |---|---|---|
-| Terrain-aware (default) | the upper edge of the disc is above the LRO LOLA terrain horizon | "Terrain-aware visibility: upper limb above the LRO LOLA horizon (240 m terrain)" |
+| Terrain-aware (default) | the upper edge of the disc is above the LRO LOLA terrain horizon | "Terrain-aware visibility: upper limb above the local LRO LOLA terrain horizon" |
 | Geometric 0° | the disc centre is above the smooth geometric horizon | "Geometric visibility — local terrain obstruction not included." |
 
 Both models use **hourly samples on half-open intervals**: a sample covers the following hour, and durations are whole hours. Rise and set times are reported as one-hour windows. Dates outside 2023–2031 are never extrapolated; they're adjusted with an explanation, or marked "insufficient data".
