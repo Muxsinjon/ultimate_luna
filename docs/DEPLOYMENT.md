@@ -1,5 +1,7 @@
 # Ultimate Luna review website
 
+Status: prepared locally. GitHub repository creation was rejected with HTTP 403, `Resource not accessible by integration`. The repository and website URLs below are intended destinations; neither has been created by this publication attempt. The owner must create the empty repository and grant the connected GitHub app access before pushing can proceed.
+
 Repository: https://github.com/Muxsinjon/ultimate_luna
 Website: https://muxsinjon.github.io/ultimate_luna/
 
