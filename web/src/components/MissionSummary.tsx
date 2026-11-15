@@ -1,7 +1,9 @@
+import { terrainScreens } from '../lib/terrainScreen'
+import type { TerrainScreen } from '../lib/finder'
 import { PROVENANCE } from '../lib/provenance'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { makeCtx, summarize } from '../lib/analysis'
-import { checkSentence, checksFor, metricsAt, prepare, statusFor, STATUS_LABEL } from '../lib/finder'
+import { checkSentence, evaluateRequirements, metricsAt, prepare, STATUS_LABEL } from '../lib/finder'
 import { hourly } from '../lib/analysis'
 import { fmtHours, fmtLat, fmtLon, fmtPct, fmtTime } from '../lib/format'
 import { DAY, HOUR, type SummaryContext, useStore } from '../lib/store'
@@ -11,8 +13,9 @@ import { Icon } from './ui'
 
 const LIMITS = [
   'Visibility is geometric line of sight from hourly samples. It does not establish actual radio communication or guaranteed solar power.',
-  'It does not assess battery capacity, landing safety, surface slope or stability, thermal survivability, radiation, or access to water ice.',
+  'It does not assess battery capacity, landing safety, surface stability, thermal survivability, radiation, or access to water ice.',
   'Terrain-aware results use LOLA terrain at 240 m (curated polar sites); nearby boulders and slopes are not resolved. Geometric results ignore terrain entirely.',
+  'Slope and roughness screening, when required, uses the processed native 5 m terrain footprint. Missing coverage is insufficient data, never a pass.',
   'Mission requirements are user-chosen, illustrative constraints, not NASA engineering standards.',
 ]
 
@@ -20,6 +23,27 @@ const LIMITS = [
 export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; onClose: () => void }) {
   const { s, data, site } = useStore()
   const ref = useRef<HTMLDialogElement>(null)
+  const [terrainResult, setTerrainResult] = useState<{ key: string; screens: Record<string, TerrainScreen> } | null>(null)
+  const terrainKey = JSON.stringify([s.req.terrain, ctx, s.siteA, s.siteB])
+  useEffect(() => {
+    if (!s.req.terrain) return
+    let live = true
+    const list = ctx.kind === 'compare' ? [site(s.siteA), site(s.siteB)] : [site(ctx.siteId)]
+    terrainScreens(list, s.req.terrain).then(
+      (screens) => {
+        if (live) setTerrainResult({ key: terrainKey, screens })
+      },
+      (e: Error) => {
+        if (live)
+          setTerrainResult({ key: terrainKey, screens: Object.fromEntries(list.map((x) => [x.id, { meetsPct: null, reason: e.message }])) })
+      },
+    )
+    return () => {
+      live = false
+    }
+  }, [terrainKey, s.req.terrain, ctx, s.siteA, s.siteB, site])
+  const terrainPending = !!s.req.terrain && terrainResult?.key !== terrainKey
+  const screens = terrainResult?.key === terrainKey ? terrainResult.screens : undefined
   const [generated] = useState(() => Date.now())
   useEffect(() => {
     const d = ref.current
@@ -28,6 +52,25 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
 
   const content = useMemo(() => {
     const azStep = data.sites.azStepDeg
+    const start = ctx.kind === 'compare' ? s.missionStart : ctx.startMs
+    const end = start + s.durationDays * DAY
+    if (start < data.eph.meta.startMs || end > data.eph.endMs) {
+      const xs = ctx.kind === 'compare' ? [site(s.siteA), site(s.siteB)] : [site(ctx.siteId)]
+      return {
+        title: 'Mission outside supported coverage',
+        sites: xs,
+        t0: start,
+        t1: end,
+        rows: [],
+        trade: [],
+        interruptions: [],
+        req: xs.map(() => ({
+          status: 'insufficient' as const,
+          checks: [],
+          reason: 'The complete mission is outside supported ephemeris coverage. No full-mission metrics are reported.',
+        })),
+      }
+    }
     if (ctx.kind === 'compare') {
       const A = site(s.siteA)
       const B = site(s.siteB)
@@ -40,9 +83,8 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
         const h = hourly(makeCtx(site(id), azStep), data.eph, s.vis)
         const p = prepare({ siteId: id, sun: h.sun, earth: h.earth })
         const i = Math.round((t0 - data.eph.meta.startMs) / data.eph.meta.stepMs)
-        if (i < 0 || i + s.durationDays * 24 > p.n) return null
-        const checks = checksFor(metricsAt(p, i, s.durationDays * 24), s.req)
-        return { checks, status: statusFor(checks) }
+        if (i < 0 || i + s.durationDays * 24 > p.n || t1 > data.eph.endMs) return null
+        return evaluateRequirements(metricsAt(p, i, s.durationDays * 24), s.req, screens?.[id])
       }
       return {
         title: `${A.name} vs ${B.name}`,
@@ -66,7 +108,7 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
     const p = prepare({ siteId: X.id, sun: h.sun, earth: h.earth })
     const i = Math.round((t0 - data.eph.meta.startMs) / data.eph.meta.stepMs)
     const m = metricsAt(p, i, s.durationDays * 24)
-    const checks = checksFor(m, s.req)
+    const evaluated = evaluateRequirements(m, s.req, screens?.[X.id])
     return {
       title: `${X.name}, mission window`,
       sites: [X],
@@ -81,7 +123,7 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
         { label: 'Communication interruptions', a: String(m.linkInterruptions), b: '' },
       ],
       trade: [],
-      req: [{ checks, status: statusFor(checks) }],
+      req: [evaluated],
       interruptions: [
         m.darkSpan ? `Longest darkness starts ${fmtTime(data.eph.meta.startMs + m.darkSpan.startIndex * HOUR, s.tz)}.` : 'No darkness.',
         m.blackoutSpan
@@ -89,7 +131,7 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
           : 'No blackout.',
       ],
     }
-  }, [ctx, s, data, site])
+  }, [ctx, s, data, site, screens])
 
   const json = () => {
     const out = {
@@ -103,7 +145,7 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
       requirements: s.req,
       metrics: content.rows,
       requirementChecks: content.req.map(
-        (r) => r && { status: r.status, checks: r.checks.map((c) => ({ ...c, sentence: checkSentence(c) })) },
+        (r) => r && { status: r.status, reason: r.reason, checks: r.checks.map((c) => ({ ...c, sentence: checkSentence(c) })) },
       ),
       interruptions: content.interruptions,
       tradeOffs: content.trade,
@@ -126,10 +168,10 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
   return (
     <dialog ref={ref} className="summary" aria-labelledby="sum-h" onClose={onClose}>
       <div className="summary-tools no-print">
-        <button type="button" className="btn primary" onClick={() => window.print()}>
+        <button type="button" className="btn primary" onClick={() => window.print()} disabled={terrainPending}>
           Print or save as PDF
         </button>
-        <button type="button" className="btn" onClick={json}>
+        <button type="button" className="btn" onClick={json} disabled={terrainPending}>
           Download JSON
         </button>
         <button type="button" className="btn quiet icon-only" onClick={() => ref.current?.close()} aria-label="Close summary">
@@ -182,6 +224,13 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
           </>
         )}
         <h3>Mission requirements</h3>
+        {terrainPending && <p role="status">Checking the native terrain footprint…</p>}
+        {s.req.terrain && (
+          <p>
+            Terrain: maximum slope {s.req.terrain.maxSlopeDeg}°, maximum roughness {s.req.terrain.maxRoughM} m RMS, radius{' '}
+            {s.req.terrain.radiusM} m, minimum {s.req.terrain.minMeetsPct}% meeting both limits.
+          </p>
+        )}
         <p className="small">
           Minimum sunlight {s.req.minSunPct} %, minimum Earth visibility {s.req.minEarthPct} %
           {s.req.minJointPct !== null ? `, minimum Sun and Earth together ${s.req.minJointPct} %` : ''}, maximum darkness {s.req.maxDarkH}{' '}
@@ -192,7 +241,7 @@ export default function MissionSummary({ ctx, onClose }: { ctx: SummaryContext; 
             r && (
               <div key={k}>
                 <p>
-                  <b>{content.sites[k].name}</b>: {STATUS_LABEL[r.status]}
+                  <b>{content.sites[k].name}</b>: {STATUS_LABEL[r.status]} {r.reason ?? ''}
                 </p>
                 <ul className="small">
                   {r.checks.map((c) => (

@@ -1,13 +1,12 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import GuideStrip from './components/GuideStrip'
-import type { AppData, Site, Terrain } from './lib/data'
-import { loadCore, loadTerrain } from './lib/data'
-import { fmtLat, fmtLon, fmtTime } from './lib/format'
-import { normalizeLon360 } from './lib/physics/lon'
+import type { AppData, Site } from './lib/data'
+import { loadCore } from './lib/data'
+import { fmtTime } from './lib/format'
 import { PrefsContext, storageGet, storageSet } from './lib/prefs'
 import { DEFAULT_STATE, type MissionState, clampToCoverage, fromHash, toHash } from './lib/state'
 import { DAY, HOUR, type Store, StoreContext, type SummaryContext } from './lib/store'
-import { customHorizon } from './lib/terrain'
+import { makeCustomSite, parseCustomId } from './lib/customSite'
 import { type Theme, applyTheme } from './lib/theme'
 import Header, { Mark } from './components/Header'
 import { LanePatterns } from './components/Timeline'
@@ -101,31 +100,6 @@ function BootSkeleton() {
   )
 }
 
-function makeCustomSite(t: Terrain, lat: number, lon: number): Site {
-  const lon360 = normalizeLon360(lon)
-  const h = customHorizon(t, lat, lon360)
-  return {
-    id: `custom:${lat.toFixed(4)},${lon360.toFixed(4)}`,
-    name: `Custom spot ${fmtLat(lat)}, ${fmtLon(lon360)}`,
-    group: 'Custom',
-    lat,
-    lon: lon360,
-    source: 'user input',
-    verify: false,
-    custom: true,
-    elevationM: h.elevationM,
-    horizon: h.mask,
-    horizonDistKm: h.distKm,
-    terrainNote: `Horizon computed in your browser from LOLA terrain at ${h.resolution} resolution (coarser than the listed sites).`,
-  }
-}
-
-function parseCustomId(id: string): { la: number; lo: number } | null {
-  if (!id.startsWith('custom:')) return null
-  const [la, lo] = id.slice(7).split(',').map(Number)
-  return Number.isFinite(la) && Number.isFinite(lo) ? { la, lo } : null
-}
-
 function Shell({ data, theme, setTheme }: { data: AppData; theme: Theme; setTheme: (t: Theme) => void }) {
   const first = useMemo(() => {
     const base: MissionState = window.location.hash
@@ -144,34 +118,59 @@ function Shell({ data, theme, setTheme }: { data: AppData; theme: Theme; setThem
 
   useEffect(() => storageSet('llsn.visited', '1'), [])
 
-  const set = useCallback((patch: Partial<MissionState>) => setS((cur) => ({ ...cur, ...patch })), [])
+  const set = useCallback(
+    (patch: Partial<MissionState>) => {
+      setS((cur) => clampToCoverage({ ...cur, ...patch }, data.eph.meta.startMs, data.eph.endMs).state)
+      const { note } = clampToCoverage({ ...s, ...patch }, data.eph.meta.startMs, data.eph.endMs)
+      if (note) setNotice(note)
+    },
+    [data, s],
+  )
 
   const addCustom = useCallback(async (lat: number, lon: number, slot: 'A' | 'B') => {
     setCustomBusy(true)
     try {
-      const terrain = await loadTerrain()
-      const x = makeCustomSite(terrain, lat, lon)
-      setCustom((c) => [...c.filter((y) => y.id !== x.id).slice(-5), x])
+      const x = await makeCustomSite(lat, lon)
+      setCustom((c) => [...c.filter((y) => y.id !== x.id), x])
       setS((cur) => ({ ...cur, ...(slot === 'A' ? { siteA: x.id } : { siteB: x.id }) }))
+    } catch (e) {
+      setNotice(`The selected location could not be loaded: ${(e as Error).message}. Please try again.`)
+      throw e
     } finally {
       setCustomBusy(false)
     }
   }, [])
 
-  // custom sites referenced by a shared link need terrain before they can be shown
+  // Rehydrate shared coordinates; invalid or failed links recover to curated sites instead of hanging.
   useEffect(() => {
-    const ids = [s.siteA, s.siteB].filter((id) => id.startsWith('custom:') && !custom.some((c) => c.id === id))
+    const ids = [...new Set([s.siteA, s.siteB])].filter((id) => id.startsWith('custom:') && !custom.some((c) => c.id === id))
     if (!ids.length) return
-    loadTerrain().then(
-      (terrain) => {
-        const made = ids
-          .map(parseCustomId)
-          .filter((p): p is { la: number; lo: number } => p !== null)
-          .map((p) => makeCustomSite(terrain, p.la, p.lo))
-        setCustom((c) => [...c, ...made.filter((m) => !c.some((x) => x.id === m.id))])
+    let live = true
+    void Promise.all(
+      ids.map(async (id) => {
+        const p = parseCustomId(id)
+        if (!p) throw new Error('The shared location has invalid coordinates')
+        return { old: id, site: await makeCustomSite(p.lat, p.lon) }
+      }),
+    ).then(
+      (made) => {
+        if (!live) return
+        setCustom((c) => [
+          ...c,
+          ...made.map((m) => m.site).filter((m, i, arr) => !c.some((x) => x.id === m.id) && arr.findIndex((x) => x.id === m.id) === i),
+        ])
+        const canonical = (id: string) => made.find((m) => m.old === id)?.site.id ?? id
+        setS((cur) => ({ ...cur, siteA: canonical(cur.siteA), siteB: canonical(cur.siteB) }))
       },
-      () => setS((cur) => ({ ...cur, siteA: DEFAULT_STATE.siteA, siteB: DEFAULT_STATE.siteB })),
+      (e: Error) => {
+        if (!live) return
+        setNotice(`${e.message}. Restored the default comparison; choose a location to try again.`)
+        setS((cur) => ({ ...cur, siteA: DEFAULT_STATE.siteA, siteB: DEFAULT_STATE.siteB }))
+      },
     )
+    return () => {
+      live = false
+    }
   }, [s.siteA, s.siteB, custom])
 
   const site = useCallback(
@@ -215,7 +214,16 @@ function Shell({ data, theme, setTheme }: { data: AppData; theme: Theme; setThem
     const on = (e: KeyboardEvent) => {
       const el = e.target as HTMLElement | null
       const tag = el?.tagName
-      if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || el?.isContentEditable || el?.classList.contains('sv-view')) return
+      if (
+        e.defaultPrevented ||
+        el?.closest('.fp-view, .moon-globe') ||
+        tag === 'INPUT' ||
+        tag === 'SELECT' ||
+        tag === 'TEXTAREA' ||
+        el?.isContentEditable ||
+        el?.classList.contains('sv-view')
+      )
+        return
       if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return
       e.preventDefault()
       const d = (e.key === 'ArrowRight' ? 1 : -1) * (e.shiftKey ? DAY : HOUR)

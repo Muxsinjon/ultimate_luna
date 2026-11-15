@@ -1,5 +1,11 @@
 # LunaWindow project status
 
+## Current local improvement pass — 2026-11-15
+
+The separate local implementation based on upstream `42bcf0c` fixes the five reproduced audit defects and adds whole-Moon selection, a simpler dashboard and connected terrain planning. See [local changes, validation and limitations](LOCAL_IMPROVEMENTS.md). Nothing from this pass has been pushed or deployed. Historical milestone completion statements below describe the earlier milestone work; they do not establish physical-headset validation or fresh acceptance of every optional dataset.
+
+## Historical milestone handoff
+
 Updated 2026-11-15. Branch `milestone-9` on `Muxsinjon/new_luna`, based on Milestone 8 (`1c0017d`). **All nine milestones have been worked through.**
 - Milestones 1–6 are complete.
 - Milestone 7 is complete on desktop; WebXR has not been tested on a headset.

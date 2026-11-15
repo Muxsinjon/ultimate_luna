@@ -95,6 +95,11 @@ export default function FirstPersonView({
     )
   }, [])
 
+  const sceneInput = useRef({ frame, view, fov, bodies, shade, farAt })
+  useEffect(() => {
+    sceneInput.current = { frame, view, fov, bodies, shade, farAt }
+  })
+
   // scene: rebuilt only when the terrain asset or theme changes
   useEffect(() => {
     const container = host.current!
@@ -240,6 +245,13 @@ export default function FirstPersonView({
       render()
     }
     api.current = { setCamera, setBodies, setShade, setRing }
+    // Every replacement scene must receive the complete current state, including after a theme change.
+    const initial = sceneInput.current
+    ringFar.current = initial.farAt
+    setRing(initial.frame)
+    setCamera(initial.frame, initial.view, initial.fov)
+    setBodies(initial.bodies, initial.frame)
+    setShade(initial.shade)
 
     const resize = new ResizeObserver(() => {
       const w = Math.max(1, container.clientWidth),
@@ -274,6 +286,7 @@ export default function FirstPersonView({
       const walkKeys: Record<string, number> = { w: 0, d: 90, s: 180, a: 270 }
       if (look[e.key]) {
         e.preventDefault()
+        e.stopPropagation()
         latest.current.onView({ az: (v.az + look[e.key][0] + 360) % 360, el: Math.max(-80, Math.min(80, v.el + look[e.key][1])) })
       } else if (e.key.toLowerCase() in walkKeys) {
         e.preventDefault()

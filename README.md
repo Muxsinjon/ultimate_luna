@@ -1,5 +1,7 @@
 # LunaWindow
 
+**Local improvement pass:** whole-Moon selection, simpler dashboard and audit fixes. See [changes and validation](docs/LOCAL_IMPROVEMENTS.md). This pass is local only; deployment references below describe the existing project.
+
 **Explore. Compare. Plan. Experience.** Find the right place and time to land on the Moon.
 This project is for the NASA Space Apps Challenge 2026: [Lunar Landing Site Navigator](https://www.spaceappschallenge.org/2026/challenges/lunar-landing-site-navigator/).
 

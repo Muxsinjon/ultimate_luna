@@ -36,7 +36,17 @@ export default function TerrainExplorer() {
   const [lighting, setLighting] = useState<LightingLayer>('off')
   const [index, setIndex] = useState<TerrainIndex | null>(null),
     [mode, setMode] = useState<'single' | 'compare'>('single'),
-    [settings, setSettings] = useState<HazardSettings>(DEFAULT_HAZARD_SETTINGS),
+    [settings, setSettings] = useState<HazardSettings>(() =>
+      s.req.terrain
+        ? {
+            ...DEFAULT_HAZARD_SETTINGS,
+            maxSlope: s.req.terrain.maxSlopeDeg,
+            maxRough: s.req.terrain.maxRoughM,
+            radius: s.req.terrain.radiusM,
+            minMeetsPct: s.req.terrain.minMeetsPct,
+          }
+        : DEFAULT_HAZARD_SETTINGS,
+    ),
     [linked, setLinked] = useState(true),
     [results, setResults] = useState<{ A: PaneResult | null; B: PaneResult | null }>({ A: null, B: null })
   const link = useMemo<CameraLink>(() => ({ members: new Map() }), [])
@@ -65,6 +75,8 @@ export default function TerrainExplorer() {
   useEffect(() => {
     if (!index) return
     const abort = new AbortController()
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clear a previous site's load failure
+    setError('')
     let loaded: TerrainAsset | null = null
     loadTerrainAsset(abort.signal, terrainId).then(
       (a) => {
@@ -125,6 +137,38 @@ export default function TerrainExplorer() {
       await addCustom(picked.lat, picked.lon, s.surfaceSite)
     } catch {
       setPickError('Planner terrain failed to load. Try again.')
+    }
+  }
+  const validPlan = [
+    [settings.maxSlope, 0, 90],
+    [settings.maxRough, 0, 100],
+    [settings.radius, 5, 2000],
+    [settings.minMeetsPct, 0, 100],
+  ].every(([v, min, max]) => Number.isFinite(v) && v >= min && v <= max)
+  const planFootprint = async () => {
+    if (!validPlan) return
+    try {
+      if (picked && mode === 'single') await addCustom(picked.lat, picked.lon, s.surfaceSite)
+      if (mode === 'compare') {
+        for (const slot of ['A', 'B'] as const) {
+          const point = results[slot]?.picked
+          if (point) await addCustom(point.lat, point.lon, slot)
+        }
+      }
+      set({
+        ws: 'finder',
+        req: {
+          ...s.req,
+          terrain: {
+            maxSlopeDeg: settings.maxSlope,
+            maxRoughM: settings.maxRough,
+            radiusM: settings.radius,
+            minMeetsPct: settings.minMeetsPct,
+          },
+        },
+      })
+    } catch (e) {
+      setPickError((e as Error).message)
     }
   }
   const rms = shown && picked ? sampleGrid(shown, picked.lat, picked.lon, shown.errors) : null
@@ -208,8 +252,8 @@ export default function TerrainExplorer() {
             <button type="button" className="btn" onClick={() => set({ ws: 'compare' })}>
               Sun and Earth charts for these sites
             </button>
-            <button type="button" className="btn" onClick={() => set({ ws: 'finder' })}>
-              Mission windows for these sites
+            <button type="button" className="btn primary" disabled={customBusy || !validPlan} onClick={() => void planFootprint()}>
+              Plan with this footprint and criteria
             </button>
             <button type="button" className="btn" onClick={() => set({ ws: 'surface' })}>
               Surface view
@@ -219,6 +263,7 @@ export default function TerrainExplorer() {
             </button>
           </div>
         )}
+        {pickError && <p role="alert">{pickError}</p>}
         {error ? (
           <div role="alert">
             <p>{error}</p>
@@ -260,7 +305,7 @@ export default function TerrainExplorer() {
               Linked views share the camera offset in metres around each site, so both terrains appear at the same physical scale and
               orientation (X east, Y up, Z south). The two crops are separate places; side by side does not mean adjacent.
             </p>
-            <div className="adv">
+            <div>
               <SharedCriteria settings={settings} onSettings={patch} />
             </div>
             <div className="terrain-compare">
@@ -373,7 +418,7 @@ export default function TerrainExplorer() {
               X east, Y up, Z south. Inspection lighting does not model mission sunlight.
             </p>
             {imagery && <p className="hint">{shown.meta.imagery?.note}</p>}
-            <section className="panel adv">
+            <section className="panel">
               <h3>Selected surface point</h3>
               <p
                 className="num"
@@ -426,14 +471,13 @@ export default function TerrainExplorer() {
               <button className="btn" disabled={!picked || customBusy} onClick={() => void applyPoint()}>
                 {customBusy ? 'Computing horizon…' : `Use selected point as Site ${s.surfaceSite}`}
               </button>
-              {pickError && <p role="alert">{pickError}</p>}
               <p className="hint">
                 Elevation is relative to the 1737.4 km lunar sphere. Clicks report the rendered triangle surface; coordinate entry samples
                 the 20 m grid bilinearly. Decimal places do not imply accuracy. Planner custom-site horizons still use the existing 960 m
                 regional DEM over 250 km, not this local mesh.
               </p>
             </section>
-            <div className="adv">
+            <div>
               <HazardPanel
                 key={terrainId}
                 asset={shown}

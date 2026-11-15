@@ -147,10 +147,24 @@ export default function SurfaceView() {
           </button>
         </div>
         {!terrainInfo && terrainIndexed && (
-          <p className="hint" data-testid="fp-unavailable">
-            No processed NASA 5 m terrain covers {st.name}, so the 3D first-person view is not available here. This 360° panorama uses the
-            LOLA {st.lat <= -75 ? '240 m' : 'regional'} horizon; no terrain detail is invented.
-          </p>
+          <section className="panel">
+            <p className="hint" data-testid="fp-unavailable">
+              No processed NASA 5 m terrain covers {st.name}, so the 3D first-person view is not available here. This 360° panorama uses the
+              available regional LOLA horizon; no terrain detail is invented.
+            </p>
+            <p>Open a location with detailed 3D ground:</p>
+            <div className="actions">
+              {terrainIdx?.sites.map((t) => (
+                <button
+                  key={t.id}
+                  className="btn"
+                  onClick={() => set({ ...(s.surfaceSite === 'A' ? { siteA: t.plannerId } : { siteB: t.plannerId }), surface3d: true })}
+                >
+                  Explore {t.name} in 3D
+                </button>
+              ))}
+            </div>
+          </section>
         )}
         {show3d && terrainInfo ? (
           <Suspense fallback={<p role="status">Loading the first-person view…</p>}>

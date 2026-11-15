@@ -31,6 +31,8 @@ export default function SurfaceFirstPerson({ site, slot, info }: { site: Site; s
   const [overlay, setOverlay] = useState<Overlay>('sunlight')
   useEffect(() => {
     let live = true
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- clear a previous site's load error
+    setError('')
     loadSiteLayers(info.id).then(
       (l) => live && setLayers({ id: info.id, ...l }),
       (e: Error) => live && setError(e.message),
@@ -154,6 +156,12 @@ export default function SurfaceFirstPerson({ site, slot, info }: { site: Site; s
           </select>
         </label>
       </div>
+      {eye !== 2 && (
+        <p className="hint">
+          Eye height changes the camera perspective. Computed visibility, shadow overlays and the distant horizon still use the fixed 2 m
+          observer model.
+        </p>
+      )}
       <Suspense fallback={<p role="status">Loading 3D view…</p>}>
         <FirstPersonView
           asset={asset}
@@ -206,8 +214,8 @@ export default function SurfaceFirstPerson({ site, slot, info }: { site: Site; s
         {visFixed ? (
           <p className="num">
             Computed at this spot (5 m-site horizon, 2 m observer): Sun {pct(visFixed.sunFrac)} of disc visible, Earth{' '}
-            {pct(visFixed.earthFrac)} of disc in line of sight. Planner (240 m horizon) at the site location: Sun {pct(planner.sunFrac)},
-            Earth {pct(planner.earthFrac)}.
+            {pct(visFixed.earthFrac)} of disc in line of sight. Planner horizon at the site location: Sun {pct(planner.sunFrac)}, Earth{' '}
+            {pct(planner.earthFrac)}.
           </p>
         ) : illum?.error ? (
           <p role="alert">

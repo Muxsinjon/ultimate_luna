@@ -43,7 +43,7 @@ export default function SitePair() {
     if (la === null) return setErr('Latitude must be between 90 S and 90 N, for example "84.79 S" or "-84.79".')
     if (lo === null) return setErr('Longitude must be like "29.2 E", "150 W" or "209.9".')
     setErr('')
-    void addCustom(la, lo, slot)
+    void addCustom(la, lo, slot).catch((e: Error) => setErr(e.message))
   }
   return (
     <section className="panel" aria-labelledby="sites-h">

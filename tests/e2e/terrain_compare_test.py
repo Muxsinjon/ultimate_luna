@@ -101,6 +101,7 @@ with sync_playwright() as pw:
     expect(page.get_by_test_id('terrain-tradeoffs')).to_contain_text('Neither footprint meets')
     page.get_by_label('Shared maximum slope').fill('')
     expect(row('Screening result')).to_contain_text('Insufficient data')
+    expect(page.get_by_role('button', name='Plan with this footprint and criteria')).to_be_disabled()
     page.get_by_label('Shared maximum slope').fill('10')
 
     # Switching Site B terrain replaces every value (no stale Site06 numbers)
@@ -120,7 +121,7 @@ with sync_playwright() as pw:
     page.get_by_label('Site B terrain').select_option('site06')
 
     # Navigation keeps both sites
-    page.get_by_role('button', name='Mission windows for these sites').click()
+    page.get_by_role('button', name='Plan with this footprint and criteria').click()
     expect(page).to_have_url(re.compile(r'ws=finder.*a=shackleton-rim-site04.*b=nobile-rim-1-site06'))
     page.get_by_role('button', name='3D Terrain', exact=True).click()
     page.get_by_role('radio', name='Compare A and B').click()

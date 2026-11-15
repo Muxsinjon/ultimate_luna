@@ -5,7 +5,7 @@ export const PROVENANCE = {
   coordinates: 'Latitude planetocentric (degrees); longitude east-positive 0–360° (MOON_ME frame, 1737.4 km sphere).',
   units: { angle: 'degree', duration: 'hour', share: 'percent of mission time', elevation: 'metre', temperature: 'kelvin' },
   aiDisclosure:
-    'LunaWindow software was developed with AI assistance (Anthropic Claude) for code, tests and documentation. Numerical values in this file are computed by that software from the cited NASA/JPL data; they are not AI-generated estimates.',
+    'LunaWindow software was developed with AI assistance (Anthropic Claude and OpenAI Codex) for code, tests and documentation. Numerical values in this file are computed by that software from the cited NASA/JPL data; they are not AI-generated estimates.',
   disclaimer:
     'Independent NASA Space Apps Challenge 2026 project. Not a NASA product, not endorsed by NASA, and not a landing-safety or flight certification.',
 } as const

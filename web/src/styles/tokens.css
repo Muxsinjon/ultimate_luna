@@ -1,6 +1,7 @@
 /* "Terminator" design tokens: single source of truth. See docs/DESIGN_SYSTEM.md */
 :root,
 :root[data-theme='dark'] {
+  --c-moon: #ffffff;
   --c-bg: #05070d;
   --c-surface: #0b1020;
   --c-raised: #131b2e;

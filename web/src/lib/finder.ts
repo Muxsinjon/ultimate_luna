@@ -277,6 +277,18 @@ export function terrainCheck(req: TerrainReq, t: TerrainScreen | undefined): Che
   }
 }
 
+/** One hard-constraint evaluator shared by the Finder and mission reports. */
+export function evaluateRequirements(m: Metrics, req: Requirements, terrain?: TerrainScreen) {
+  const checks = checksFor(m, req)
+  let reason: string | undefined
+  if (req.terrain) {
+    const check = terrainCheck(req.terrain, terrain)
+    if ('unknown' in check) reason = check.unknown
+    else checks.push(check)
+  }
+  return { checks, reason, status: reason ? ('insufficient' as const) : statusFor(checks) }
+}
+
 /**
  * Status rule (documented in the UI):
  *  - insufficient: the mission would extend outside the supported data, or a required metric is unknown
@@ -349,6 +361,8 @@ export interface SearchInput {
   /** per-site terrain screens (used by req.terrain and the terrain preference) */
   terrain?: Record<string, TerrainScreen>
   weights?: Weights
+  /** Last supported ephemeris instant; bounds the end of every mission when supplied. */
+  dataEndMs?: number
 }
 
 export function search(inp: SearchInput): Candidate[] {
@@ -360,7 +374,7 @@ export function search(inp: SearchInput): Candidate[] {
     for (let i = first; i <= last; i += inp.everyH) {
       const startMs = inp.t0Ms + i * inp.stepMs
       const endMs = startMs + inp.durationH * inp.stepMs
-      if (i < 0 || i + inp.durationH > p.n) {
+      if (i < 0 || i + inp.durationH > p.n || (inp.dataEndMs !== undefined && endMs > inp.dataEndMs)) {
         out.push({
           siteId: p.siteId,
           startIndex: i,
@@ -378,13 +392,7 @@ export function search(inp: SearchInput): Candidate[] {
         continue
       }
       const m = metricsAt(p, i, inp.durationH)
-      const checks = checksFor(m, inp.req)
-      let reason: string | undefined
-      if (inp.req.terrain) {
-        const tc = terrainCheck(inp.req.terrain, t)
-        if ('unknown' in tc) reason = tc.unknown
-        else checks.push(tc)
-      }
+      const { checks, reason, status } = evaluateRequirements(m, inp.req, t)
       const sc = scoreFor(m, t, inp.weights ?? DEFAULT_WEIGHTS)
       out.push({
         siteId: p.siteId,
@@ -392,7 +400,7 @@ export function search(inp: SearchInput): Candidate[] {
         startMs,
         endMs,
         // a required metric that cannot be evaluated makes the candidate insufficient data, never a pass
-        status: reason ? 'insufficient' : statusFor(checks),
+        status,
         failed: checks.filter((c) => !c.pass).length,
         checks,
         metrics: m,

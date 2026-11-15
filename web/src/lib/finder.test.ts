@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { type Requirements, checkSentence, checksFor, metricsAt, prepare, rank, search, statusFor } from './finder'
+import { type Requirements, checkSentence, checksFor, evaluateRequirements, metricsAt, prepare, rank, search, statusFor } from './finder'
 
 const H = 3_600_000
 const flags = (pattern: string) => Uint8Array.from(pattern.split('').map((c) => (c === '1' ? 1 : 0)))
@@ -111,5 +111,33 @@ describe('search and ranking', () => {
     const a = { ...run(req())[0], status: 'partial' as const, failed: 1 }
     const b = { ...run(req())[0], status: 'meets' as const, failed: 0, metrics: { ...run(req())[0].metrics!, jointPct: 1 } }
     expect(rank([a, b])[0].status).toBe('meets')
+  })
+})
+
+describe('summary and Finder share complete hard requirements', () => {
+  const p = prepare({ siteId: 's', sun: flags('11111111'), earth: flags('11111111') })
+  const terrainReq = req({ terrain: { maxSlopeDeg: 20, maxRoughM: 1, radiusM: 100, minMeetsPct: 90 } })
+  it('never marks visibility-passing but terrain-failing sites as meeting all requirements', () => {
+    const evaluated = evaluateRequirements(metricsAt(p, 0, 4), terrainReq, { meetsPct: 0, reason: 'Site04 footprint' })
+    expect(evaluated.status).toBe('partial')
+    expect(evaluated.checks.find((c) => c.key === 'terrain')?.pass).toBe(false)
+  })
+  it('marks unknown required terrain as insufficient, never a pass', () => {
+    expect(evaluateRequirements(metricsAt(p, 0, 4), terrainReq).status).toBe('insufficient')
+  })
+  it('enforces the physical ephemeris endpoint even if a final sample exists there', () => {
+    const out = search({
+      sites: [p],
+      t0Ms: 0,
+      stepMs: H,
+      searchStartMs: 3 * H,
+      searchEndMs: 4 * H,
+      everyH: 1,
+      durationH: 4,
+      req: req(),
+      dataEndMs: 7 * H,
+    })
+    expect(out.find((c) => c.startIndex === 3)?.status).toBe('meets')
+    expect(out.find((c) => c.startIndex === 4)?.status).toBe('insufficient')
   })
 })

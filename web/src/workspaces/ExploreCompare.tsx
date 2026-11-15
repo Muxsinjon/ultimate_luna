@@ -1,3 +1,4 @@
+import MissionDashboard from '../components/MissionDashboard'
 import BlockerPanel from '../components/BlockerPanel'
 import { Suspense, lazy, useMemo, useState } from 'react'
 import { makeCtx, nextEvent, sampleAt, summarize } from '../lib/analysis'
@@ -17,6 +18,7 @@ import TimeBar from '../components/TimeBar'
 import { ErrorBoundary, Skeleton } from '../components/ui'
 import type { Scenario } from '../components/Compare'
 
+const MoonGlobe = lazy(() => import('../components/MoonGlobe'))
 const PolarMap = lazy(() => import('../components/PolarMap'))
 const Compare = lazy(() => import('../components/Compare'))
 
@@ -54,18 +56,21 @@ export default function ExploreCompare() {
       <aside className="rail" aria-label="Sites and mission period">
         <SitePair />
         <MissionControls />
-        <Suspense fallback={<Skeleton h={360} />}>
-          <ErrorBoundary label="The map">
-            <PolarMap
-              sites={sites}
-              siteA={s.siteA}
-              siteB={s.siteB}
-              theme={theme}
-              onSelect={(id, slot) => set(slot === 'A' ? { siteA: id } : { siteB: id })}
-              onPick={(lat, lon, slot) => void addCustom(lat, lon, slot)}
-            />
-          </ErrorBoundary>
-        </Suspense>
+        <details className="adv panel">
+          <summary>Regional illumination map</summary>
+          <Suspense fallback={<Skeleton h={360} />}>
+            <ErrorBoundary label="The map">
+              <PolarMap
+                sites={sites}
+                siteA={s.siteA}
+                siteB={s.siteB}
+                theme={theme}
+                onSelect={(id, slot) => set(slot === 'A' ? { siteA: id } : { siteB: id })}
+                onPick={(lat, lon, slot) => void addCustom(lat, lon, slot).catch(() => undefined)}
+              />
+            </ErrorBoundary>
+          </Suspense>
+        </details>
         <div className="adv">
           <MissionCheck v={data.validation} compact />
         </div>
@@ -84,7 +89,7 @@ export default function ExploreCompare() {
             <button type="button" className="btn" onClick={() => set({ ws: 'finder', searchStart: s.missionStart })}>
               Open in Mission Window Finder
             </button>
-            <button type="button" className="btn" onClick={() => set({ ws: 'surface' })}>
+            <button type="button" className="btn" onClick={() => set({ ws: 'surface', surface3d: true })}>
               Inspect in Surface View
             </button>
             <button type="button" className="btn" onClick={() => store.openSummary({ kind: 'compare' })}>
@@ -108,17 +113,28 @@ export default function ExploreCompare() {
           </div>
         </div>
 
-        <div className="status-pair">
+        <Suspense fallback={<Skeleton h={440} />}>
+          <ErrorBoundary label="The Moon globe">
+            <MoonGlobe />
+          </ErrorBoundary>
+        </Suspense>
+        <MissionDashboard
+          a={{ site: A, sum: ra.sum, now: nowA, sunEvent: ev.aS, earthEvent: ev.aE }}
+          b={{ site: B, sum: rb.sum, now: nowB, sunEvent: ev.bS, earthEvent: ev.bE }}
+        />
+        <div className="status-pair adv">
           <SiteStatus site={A} slot="A" now={nowA} sunEv={ev.aS} earthEv={ev.aE} />
           <SiteStatus site={B} slot="B" now={nowB} sunEv={ev.bS} earthEv={ev.bE} />
         </div>
-        <BlockerPanel
-          sites={[
-            { slot: 'A', site: A, samples: ra.samples },
-            { slot: 'B', site: B, samples: rb.samples },
-          ]}
-          azStepDeg={data.sites.azStepDeg}
-        />
+        <div className="adv">
+          <BlockerPanel
+            sites={[
+              { slot: 'A', site: A, samples: ra.samples },
+              { slot: 'B', site: B, samples: rb.samples },
+            ]}
+            azStepDeg={data.sites.azStepDeg}
+          />
+        </div>
         <TimeBar />
         {s.mode === 'explore' && (
           <aside className="explain" aria-label="Plain-language explanation">
@@ -136,27 +152,33 @@ export default function ExploreCompare() {
             </p>
           </aside>
         )}
-        <ElevationChart
-          body="sun"
-          t0={t0}
-          t1={t1}
-          series={[
-            { slot: 'A', name: A.name, samples: ra.samples },
-            { slot: 'B', name: B.name, samples: rb.samples },
-          ]}
-        />
-        <ElevationChart
-          body="earth"
-          t0={t0}
-          t1={t1}
-          series={[
-            { slot: 'A', name: A.name, samples: ra.samples },
-            { slot: 'B', name: B.name, samples: rb.samples },
-          ]}
-        />
-        <CompareLanes a={ra.samples} b={rb.samples} t0={t0} t1={t1} />
-        <CompareTable A={ra.sum} B={rb.sum} nameA={A.name} nameB={B.name} />
-
+        {!s.full && (
+          <button className="btn" onClick={() => set({ full: true })}>
+            Show charts and detailed comparison
+          </button>
+        )}
+        <div className="adv">
+          <ElevationChart
+            body="sun"
+            t0={t0}
+            t1={t1}
+            series={[
+              { slot: 'A', name: A.name, samples: ra.samples },
+              { slot: 'B', name: B.name, samples: rb.samples },
+            ]}
+          />
+          <ElevationChart
+            body="earth"
+            t0={t0}
+            t1={t1}
+            series={[
+              { slot: 'A', name: A.name, samples: ra.samples },
+              { slot: 'B', name: B.name, samples: rb.samples },
+            ]}
+          />
+          <CompareLanes a={ra.samples} b={rb.samples} t0={t0} t1={t1} />
+          <CompareTable A={ra.sum} B={rb.sum} nameA={A.name} nameB={B.name} />
+        </div>
         <details className="more adv">
           <summary>Compare the same site on different dates</summary>
           <Suspense fallback={<Skeleton h={200} />}>

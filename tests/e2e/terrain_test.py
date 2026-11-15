@@ -57,7 +57,7 @@ with sync_playwright() as pw:
  page.get_by_label('Terrain appearance').select_option('elevation')
  expect(canvas).to_have_attribute('data-appearance','elevation')
  page.get_by_role('button',name='Use selected point as Site A').click()
- expect(page.get_by_label('Site A',exact=True)).to_have_value('custom:-89.5343,209.9477',timeout=20000)
+ expect(page.get_by_label('Site A',exact=True)).to_have_value('custom:-89.534320,209.947670',timeout=20000)
  page.get_by_role('button',name='Explore & Compare',exact=True).click();expect(page.get_by_label('Site A status')).to_contain_text('Custom spot')
  page.get_by_role('button',name='3D Terrain',exact=True).click();expect(canvas).to_be_visible()
  page.get_by_label('Latitude (degrees)',exact=True).fill('0');page.get_by_label('East longitude (degrees)',exact=True).fill('0');page.get_by_role('button',name='Inspect coordinates').click();expect(page.get_by_role('alert')).to_contain_text('outside valid terrain coverage')

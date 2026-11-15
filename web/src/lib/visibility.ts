@@ -125,7 +125,7 @@ export function runsSummary(f: Flags, times: number[], stepMs: number) {
 }
 
 export const MODEL_LABEL: Record<VisModel, string> = {
-  terrain: 'Terrain-aware visibility: upper limb above the LRO LOLA horizon (240 m terrain)',
+  terrain: 'Terrain-aware visibility: upper limb above the local LRO LOLA terrain horizon',
   geometric: 'Geometric visibility: local terrain obstruction not included',
 }
 

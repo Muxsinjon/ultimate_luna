@@ -6,7 +6,6 @@ import {
   STATUS_LABEL,
   type Status,
   type TerrainReq,
-  type TerrainScreen,
   type Weights,
   DEFAULT_TERRAIN_REQ,
   WEIGHT_LABEL,
@@ -14,11 +13,10 @@ import {
   prepare,
   search,
 } from '../lib/finder'
-import type { Site } from '../lib/data'
-import { loadSiteLayers } from '../lib/terrainCache'
+import { terrainScreens } from '../lib/terrainScreen'
+import type { TerrainScreen } from '../lib/finder'
+import { searchKey } from '../lib/searchContext'
 import { PROVENANCE } from '../lib/provenance'
-import { footprintDetail, NO_TERRAIN, terrainScreenFrom } from '../lib/terrainCompare'
-import { loadTerrainIndex, sampleGrid, terrainSiteFor } from '../lib/terrainMesh'
 import { fmtHours, fmtPct, fmtTime, fromInputValue, toInputValue } from '../lib/format'
 import { INFO } from '../lib/glossary'
 import { DURATIONS } from '../lib/state'
@@ -27,31 +25,6 @@ import { MODEL_LABEL } from '../lib/visibility'
 import { Icon, InfoTip } from '../components/ui'
 
 type SortKey = 'rank' | 'start' | 'sun' | 'earth' | 'joint' | 'dark' | 'blackout' | 'score'
-
-/** Screen each site's 5 m terrain footprint (Milestones 2–3 estimators); sites without processed terrain are unknown. */
-async function terrainScreens(list: Site[], req: TerrainReq): Promise<Record<string, TerrainScreen>> {
-  const index = await loadTerrainIndex()
-  const out: Record<string, TerrainScreen> = {}
-  for (const x of list) {
-    const info = terrainSiteFor(index.sites, x.id, x.lat, x.lon)
-    if (!info) {
-      out[x.id] = NO_TERRAIN(x.name)
-      continue
-    }
-    const { asset, hazards } = await loadSiteLayers(info.id)
-    const h = sampleGrid(asset, x.lat, x.lon)
-    if (h === null) {
-      out[x.id] = NO_TERRAIN(x.name)
-      continue
-    }
-    const d = footprintDetail(hazards, asset, { lat: x.lat, lon: x.lon }, h, req.radiusM, {
-      slope: req.maxSlopeDeg,
-      roughness: req.maxRoughM,
-    })
-    out[x.id] = terrainScreenFrom(d, info.product, x.name)
-  }
-  return out
-}
 
 /** Reproducible scenario + results as a JSON download (inputs, method, sources, every candidate's numbers). */
 function downloadScenario(payload: unknown) {
@@ -119,7 +92,9 @@ export default function MissionFinder() {
   const [scope, setScope] = useState<'all' | 'pair'>('all')
   const [everyH, setEveryH] = useState(6)
   const [results, setResults] = useState<Candidate[] | null>(null)
-  const [runInfo, setRunInfo] = useState<{ req: Requirements; weights: Weights; durationDays: number; ms: number } | null>(null)
+  const [runInfo, setRunInfo] = useState<{ req: Requirements; weights: Weights; durationDays: number; key: string; ms: number } | null>(
+    null,
+  )
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [filter, setFilter] = useState<Status | 'all'>('all')
@@ -156,6 +131,7 @@ export default function MissionFinder() {
       })
       const res = search({
         sites: prepared,
+        dataEndMs: data.eph.endMs,
         t0Ms: data.eph.meta.startMs,
         stepMs: data.eph.meta.stepMs,
         searchStartMs: s.searchStart,
@@ -167,7 +143,13 @@ export default function MissionFinder() {
         weights: s.weights,
       })
       setResults(res)
-      setRunInfo({ req: s.req, weights: s.weights, durationDays: s.durationDays, ms: performance.now() - t })
+      setRunInfo({
+        req: s.req,
+        weights: s.weights,
+        durationDays: s.durationDays,
+        key: searchKey(s, scope, everyH),
+        ms: performance.now() - t,
+      })
       setShown(25)
       setWhy(null)
       setBusy(false)
@@ -232,16 +214,13 @@ export default function MissionFinder() {
     setWhy(c)
     window.setTimeout(() => whyRef.current?.focus(), 0)
   }
-  const stale =
-    runInfo &&
-    (JSON.stringify(runInfo.req) !== JSON.stringify(s.req) ||
-      JSON.stringify(runInfo.weights) !== JSON.stringify(s.weights) ||
-      runInfo.durationDays !== s.durationDays)
+  const stale = !!runInfo && runInfo.key !== searchKey(s, scope, everyH)
   const setTerrain = (patch: Partial<TerrainReq>) => setReq({ terrain: { ...(s.req.terrain ?? DEFAULT_TERRAIN_REQ), ...patch } })
   const setWeight = (k: keyof Weights, v: number) => set({ weights: { ...s.weights, [k]: v } })
   const exportScenario = () =>
     results &&
     runInfo &&
+    !stale &&
     downloadScenario({
       app: 'LunaWindow Mission Window Finder',
       provenance: PROVENANCE,
@@ -523,7 +502,15 @@ export default function MissionFinder() {
           </div>
         </div>
 
-        {!results ? (
+        {stale ? (
+          <div className="state-empty" role="status">
+            <p className="state-title">Search settings changed.</p>
+            <p>
+              Recalculate to see results for these dates, sites and requirements. Previous results cannot be exported or opened with
+              different settings.
+            </p>
+          </div>
+        ) : !results ? (
           <div className="state-empty">
             <p className="state-title">Set your requirements, then select “Find mission windows”.</p>
             <p className="muted">
@@ -533,11 +520,6 @@ export default function MissionFinder() {
           </div>
         ) : (
           <>
-            {stale && (
-              <p className="field-error" role="status">
-                <Icon name="warn" size={16} /> Requirements changed since this search. Select “Recalculate” to update the results.
-              </p>
-            )}
             <div className="finder-summary" aria-live="polite">
               {STATUS_ORDER.map((st) => (
                 <button
@@ -708,7 +690,7 @@ export default function MissionFinder() {
             </button>
           </>
         )}
-        {why && results && <WhyPanel c={why} all={results} innerRef={whyRef} onClose={() => setWhy(null)} />}
+        {why && results && !stale && <WhyPanel c={why} all={results} innerRef={whyRef} onClose={() => setWhy(null)} />}
       </section>
     </div>
   )

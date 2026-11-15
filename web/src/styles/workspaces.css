@@ -1193,3 +1193,155 @@ dialog.summary::backdrop {
 .blockers .dot.earth {
   background: var(--c-earth);
 }
+
+/* Location-first dashboard: progressive detail, shared science and one mission state. */
+.eyebrow {
+  font-size: var(--fs-0);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-text-muted);
+  margin: 0 0 var(--s-2);
+  font-weight: 600;
+}
+.moon-picker {
+  padding: var(--s-5);
+  overflow: hidden;
+}
+.moon-picker h3 {
+  font-size: var(--fs-4);
+  margin: 0;
+}
+.moon-picker-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(240px, 1fr);
+  gap: var(--s-5);
+}
+.moon-globe-shell {
+  position: relative;
+  border-radius: var(--r-lg);
+  background: var(--c-sky-night);
+  overflow: hidden;
+}
+.moon-globe {
+  height: 420px;
+  width: 100%;
+  touch-action: none;
+}
+.moon-globe canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.globe-crosshair {
+  pointer-events: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--c-moon);
+  opacity: 0.6;
+  font-size: 22px;
+}
+.globe-controls {
+  position: absolute;
+  bottom: var(--s-3);
+  left: var(--s-3);
+  right: var(--s-3);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-1);
+}
+.globe-controls .btn {
+  background: var(--c-surface);
+  font-size: var(--fs-0);
+  min-height: 36px;
+  padding: var(--s-2);
+}
+.globe-selection {
+  padding: var(--s-4) 0;
+  min-width: 0;
+}
+.globe-selection h4 {
+  font-size: var(--fs-4);
+  margin: 0;
+}
+.globe-coordinates {
+  font-size: var(--fs-3);
+  color: var(--c-accent);
+}
+.coverage-note {
+  border-left: 2px solid var(--c-earth);
+  padding-left: var(--s-3);
+  color: var(--c-text-muted);
+}
+.globe-light-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+}
+.globe-presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+.mission-dashboard {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s-4);
+}
+.dashboard-card h3 {
+  margin: 0 0 var(--s-4);
+  font-size: var(--fs-4);
+}
+.dashboard-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--s-3);
+}
+.dashboard-metrics dt {
+  color: var(--c-text-muted);
+  font-size: var(--fs-1);
+}
+.dashboard-metrics dd {
+  font-size: var(--fs-5);
+  margin: var(--s-1) 0;
+  font-variant-numeric: tabular-nums;
+}
+.dashboard-metrics dd small {
+  font-size: var(--fs-1);
+  margin-left: var(--s-1);
+  color: var(--c-text-muted);
+}
+@media (max-width: 1100px) {
+  .moon-picker-grid {
+    grid-template-columns: 1fr;
+  }
+  .moon-globe {
+    height: 360px;
+  }
+}
+@media (max-width: 600px) {
+  .mission-dashboard {
+    grid-template-columns: 1fr;
+  }
+  .moon-picker {
+    padding: var(--s-3);
+  }
+  .moon-globe {
+    height: 320px;
+  }
+  .globe-controls {
+    bottom: var(--s-2);
+  }
+}
+
+.globe-light-toggle input {
+  width: 18px;
+  height: 18px;
+  min-height: 0;
+  flex: 0 0 18px;
+}
+.globe-selection .actions {
+  justify-content: flex-start;
+}

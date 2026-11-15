@@ -11,6 +11,7 @@ import { useStore } from '../lib/store'
 
 export interface PaneResult {
   siteId: string
+  picked: SurfacePoint | null
   detail: FootprintDetail | null
 }
 
@@ -76,8 +77,8 @@ export default function TerrainComparePane({
     [hz, asset, focus, settings.radius, criteria],
   )
   useEffect(() => {
-    onResult(slot, hz && asset ? { siteId: info.id, detail } : null)
-  }, [slot, info.id, hz, asset, detail, onResult])
+    onResult(slot, hz && asset ? { siteId: info.id, detail, picked } : null)
+  }, [slot, info.id, hz, asset, detail, picked, onResult])
   useEffect(() => () => onResult(slot, null), [slot, onResult])
   const texture = useHazardTexture(hz, settings.layer, criteria, theme)
   const illum = useSiteIllumination(lighting === 'off' ? null : info.id)
