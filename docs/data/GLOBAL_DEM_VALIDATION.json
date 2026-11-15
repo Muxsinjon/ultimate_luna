@@ -1,0 +1,15 @@
+{
+  "source": "https://imbrium.mit.edu/DATA/LOLA_GDR/CYLINDRICAL/IMG/LDEM_16.IMG",
+  "label": "https://imbrium.mit.edu/DATA/LOLA_GDR/CYLINDRICAL/IMG/LDEM_16.LBL",
+  "source_sha256": "a511e40d7a3ea3275945b4da2a1df377133264fab0be94b7434b1cf8907254cb",
+  "shipped_sha256": "a8515a5121369846c06ff008ac9102321613ccf06af771b9154ff7b91a48a44e",
+  "source_frame": "MEAN EARTH/POLAR AXIS OF DE421",
+  "method": "0.5 m/DN, 4x4 block mean, nearest integer metre; 16 to 4 pixels/degree",
+  "samples": 1036800,
+  "all_exact": true,
+  "max_difference_m": 0,
+  "range_m": [
+    -8613,
+    10428
+  ]
+}

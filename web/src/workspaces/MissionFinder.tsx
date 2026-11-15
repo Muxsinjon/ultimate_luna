@@ -341,7 +341,7 @@ export default function MissionFinder() {
             max={100}
             onChange={(v) => setReq({ minEarthPct: v })}
           />
-          <div className="adv">
+          <div>
             <div className="field">
               <label className="toggle">
                 <input
@@ -378,7 +378,7 @@ export default function MissionFinder() {
               max={2000}
               onChange={(v) => setReq({ maxBlackoutH: v })}
             />
-            <fieldset className="field">
+            <fieldset className="field adv">
               <legend className="field-label">Terrain requirement (hard)</legend>
               <label className="toggle">
                 <input
@@ -431,7 +431,7 @@ export default function MissionFinder() {
                 </>
               )}
             </fieldset>
-            <fieldset className="field">
+            <fieldset className="field adv">
               <legend className="field-label">Preferences (soft, order windows within the same status)</legend>
               {(Object.keys(WEIGHT_LABEL) as (keyof Weights)[]).map((k) => (
                 <NumberField
@@ -731,6 +731,7 @@ function WhyPanel({
       ws,
       siteA: c.siteId,
       surfaceSite: 'A',
+      surface3d: ws === 'surface',
       missionStart: c.startMs,
       durationDays: Math.round((c.endMs - c.startMs) / DAY),
       selectedTime: at,
@@ -857,7 +858,7 @@ function WhyPanel({
         >
           Open in 3D terrain
         </button>
-        <button type="button" className="btn" onClick={() => critical && open('compare', idx(critical.startIndex))} disabled={!critical}>
+        <button type="button" className="btn" onClick={() => critical && open('surface', idx(critical.startIndex))} disabled={!critical}>
           Jump to the most critical interruption
         </button>
         <button

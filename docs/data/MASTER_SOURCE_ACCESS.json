@@ -1,0 +1,102 @@
+{
+  "checked_date_utc": "2026-11-15",
+  "method": "Requests HTTPS with certificate verification; catalogue reachability only",
+  "sources": [
+    {
+      "url": "https://pgda.gsfc.nasa.gov/products/78",
+      "status": 200,
+      "final_url": "https://pgda.gsfc.nasa.gov/products/78",
+      "bytes": 317341
+    },
+    {
+      "url": "https://pgda.gsfc.nasa.gov/products/90",
+      "status": 200,
+      "final_url": "https://pgda.gsfc.nasa.gov/products/90",
+      "bytes": 30348
+    },
+    {
+      "url": "https://quickmap.lroc.im-ldi.com/",
+      "status": 200,
+      "final_url": "https://quickmap.lroc.im-ldi.com/",
+      "bytes": 8160
+    },
+    {
+      "url": "https://pds.lroc.im-ldi.com/data",
+      "status": 200,
+      "final_url": "https://pds.lroc.im-ldi.com/data/",
+      "bytes": 20211
+    },
+    {
+      "url": "https://pgda.gsfc.nasa.gov/products/98",
+      "status": 200,
+      "final_url": "https://pgda.gsfc.nasa.gov/products/98",
+      "bytes": 24655
+    },
+    {
+      "url": "https://ssd-api.jpl.nasa.gov/doc/horizons.html",
+      "status": 200,
+      "final_url": "https://ssd-api.jpl.nasa.gov/doc/horizons.html",
+      "bytes": 112553
+    },
+    {
+      "url": "https://pgda.gsfc.nasa.gov/products/69",
+      "status": 200,
+      "final_url": "https://pgda.gsfc.nasa.gov/products/69",
+      "bytes": 27981
+    },
+    {
+      "url": "https://www.diviner.ucla.edu/data",
+      "status": 200,
+      "final_url": "https://www.diviner.ucla.edu/data",
+      "bytes": 467069
+    },
+    {
+      "url": "https://pds-geosciences.wustl.edu/missions/lro/diviner.htm",
+      "status": 200,
+      "final_url": "https://pds-geosciences.wustl.edu/missions/lro/diviner.htm",
+      "bytes": 39498
+    },
+    {
+      "url": "https://data.lroc.im-ldi.com/lroc/view_rdr/SHAPEFILE_NAC_DTMS",
+      "status": 200,
+      "final_url": "https://data.lroc.im-ldi.com/lroc/view_rdr/SHAPEFILE_NAC_DTMS",
+      "bytes": 10960
+    },
+    {
+      "url": "https://pds-geosciences.wustl.edu/missions/lro/lend.htm",
+      "status": 200,
+      "final_url": "https://pds-geosciences.wustl.edu/missions/lro/lend.htm",
+      "bytes": 31256
+    },
+    {
+      "url": "https://pds-geosciences.wustl.edu/missions/lro/mrf.htm",
+      "status": 200,
+      "final_url": "https://pds-geosciences.wustl.edu/missions/lro/mrf.htm",
+      "bytes": 38682
+    },
+    {
+      "url": "https://pds-imaging.jpl.nasa.gov/volumes/m3.html",
+      "status": 200,
+      "final_url": "https://pds-imaging.jpl.nasa.gov/volumes/m3.html",
+      "bytes": 6960
+    },
+    {
+      "url": "https://pds.shadowcam.im-ldi.com/",
+      "status": 200,
+      "final_url": "https://pds.shadowcam.im-ldi.com/",
+      "bytes": 1670
+    },
+    {
+      "url": "https://pds-ppi.igpp.ucla.edu/mission/LUNAR_RECONNAISSANCE_ORBITER",
+      "status": 200,
+      "final_url": "https://pds-ppi.igpp.ucla.edu/mission/LUNAR_RECONNAISSANCE_ORBITER",
+      "bytes": 34702
+    },
+    {
+      "url": "https://naif.jpl.nasa.gov/naif/data_generic.html",
+      "status": 200,
+      "final_url": "https://naif.jpl.nasa.gov/naif/data_generic.html",
+      "bytes": 11265
+    }
+  ]
+}

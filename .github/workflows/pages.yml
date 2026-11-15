@@ -29,6 +29,7 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
       - run: npm ci
+      - run: python ../pipeline/verify_browser_data.py --check
       - run: npm test
       - name: Build (absolute URL for Open Graph previews)
         run: npm run build

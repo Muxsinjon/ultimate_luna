@@ -23,6 +23,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run format:check
+      - run: python ../pipeline/verify_browser_data.py --check
       - run: npm test
       - run: npm run build
       - uses: actions/setup-python@v5
@@ -35,3 +36,4 @@ jobs:
           npx vite preview --port 4173 --strictPort &
           npx --yes wait-on http://localhost:4173/
           python ../tests/e2e/smoke_test.py http://localhost:4173/
+          python ../tests/e2e/master_prompt_test.py http://localhost:4173/

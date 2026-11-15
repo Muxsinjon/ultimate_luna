@@ -1,0 +1,12 @@
+{
+  "ephem.json": "7f531cce52e7b0f221b45944b8689b64b25096322c98ff4dfb0c62baf11cfdd9",
+  "ephem.bin": "74f692a9230c7f5e9dafd7fe2696783a44da0e06be9946d34bca996a6d834d9d",
+  "sites.json": "42866449d3b5de11fc24735ca90dff6508a0fdca51a03916c17dfcc3c0d481dc",
+  "validation.json": "b3ec321573ba619835cb5639de175e9d0dc4ea36fd04b9975d4b0ded2850564a",
+  "dem_global.json": "c707209aa6606fd27fd8c2010dcd3cf35a2a12bf43008cf397ad377948f366ba",
+  "dem_global.bin": "a8515a5121369846c06ff008ac9102321613ccf06af771b9154ff7b91a48a44e",
+  "dem_polar.json": "6577dd4842efaaf4c791291933841b3fc20a23590297df6a0793d7bb8009c1ab",
+  "dem_polar.bin": "050bb2cd18d721973a11fd8df499a51c41f1771903f7ac68cc4e0d12e8d954b7",
+  "pgda_sun.bin": "3097f854ce5fde3aefcfe6ff0806587e60bee1e9e3d814c436fb916dc073c15b",
+  "pgda_earth.bin": "1f71912a49f4512512bf49757cca5aee49f4acab8d4bfb2ac947d3efcbdcea66"
+}

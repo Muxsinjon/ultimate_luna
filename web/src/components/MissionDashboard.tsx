@@ -2,7 +2,7 @@ import type { Site } from '../lib/data'
 import type { WindowSummary, Sample, NextEvent } from '../lib/analysis'
 import { useStore, HOUR } from '../lib/store'
 import { MODEL_LABEL, signal } from '../lib/visibility'
-import { fmtHoursApprox, fmtTime } from '../lib/format'
+import { fmtHoursApprox, fmtTime, fmtLat, fmtLon, fmtAz, fmtDeg } from '../lib/format'
 import { Chip } from './ui'
 
 type Card = { site: Site; sum: WindowSummary; now: Sample; sunEvent: NextEvent; earthEvent: NextEvent }
@@ -15,7 +15,18 @@ export default function MissionDashboard({ a, b }: { a: Card; b: Card }) {
         <article className="panel dashboard-card" key={i}>
           <p className="eyebrow">Site {i === 0 ? 'A' : 'B'} / Mission at a glance</p>
           <h3>{site.name.replace(/ \(.*/, '')}</h3>
+          <p className="small muted">
+            {fmtLat(site.lat)} · {fmtLon(site.lon)}
+            {site.verify && ' · Coordinates need verification'}
+          </p>
+          <details className="small">
+            <summary>Location source</summary>
+            <p>{site.source}</p>
+          </details>
           <p className="small muted">At {fmtTime(now.t, s.tz)}</p>
+          <p className="small num">
+            Sun: az {fmtAz(now.sunAz)}, el {fmtDeg(now.sunEl)} · Earth: az {fmtAz(now.earthAz)}, el {fmtDeg(now.earthEl)}
+          </p>
           <div className="chips">
             <Chip kind={signal(now, 'sun', s.vis) > 0 ? 'sun' : 'none'}>{signal(now, 'sun', s.vis) > 0 ? 'Sun visible' : 'Dark'}</Chip>
             <Chip kind={signal(now, 'earth', s.vis) > 0 ? 'earth' : 'none'}>
@@ -25,7 +36,9 @@ export default function MissionDashboard({ a, b }: { a: Card; b: Card }) {
           <p className="small">
             {[sunEvent, earthEvent]
               .map((ev) =>
-                ev.time === null ? `No ${ev.kind.toLowerCase()} before coverage ends` : `${ev.kind} in ${fmtHoursApprox(ev.time - now.t)}`,
+                ev.time === null
+                  ? `No ${ev.kind.toLowerCase()} in the searched period (up to 400 days)`
+                  : `${ev.kind} in ${fmtHoursApprox(ev.time - now.t)}`,
               )
               .join(' · ')}{' '}
             (hourly sampling)

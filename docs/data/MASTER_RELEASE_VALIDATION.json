@@ -1,0 +1,95 @@
+{
+  "date_utc": "2026-11-15",
+  "target": "Muxsinjon/ultimate_luna",
+  "local_base": "http://localhost:4191/",
+  "typescript": {
+    "files_passed": 24,
+    "tests_passed": 150
+  },
+  "python": {
+    "passed": 27,
+    "skipped_optional_source_caches": 7
+  },
+  "lint": "pass",
+  "format": "pass",
+  "production_build": "pass",
+  "core_sha256_files_verified": 10,
+  "browser_suites": [
+    {
+      "test": "smoke",
+      "exit_code": 0,
+      "seconds": 35.2
+    },
+    {
+      "test": "astronomy",
+      "exit_code": 0,
+      "seconds": 4.0
+    },
+    {
+      "test": "lighting",
+      "exit_code": 0,
+      "seconds": 11.9
+    },
+    {
+      "test": "finder",
+      "exit_code": 0,
+      "seconds": 5.7
+    },
+    {
+      "test": "terrain_compare",
+      "exit_code": 0,
+      "seconds": 28.7
+    },
+    {
+      "test": "surface3d",
+      "exit_code": 0,
+      "seconds": 15.4
+    },
+    {
+      "test": "science",
+      "exit_code": 0,
+      "seconds": 6.8
+    },
+    {
+      "test": "journey",
+      "exit_code": 0,
+      "seconds": 46.0
+    },
+    {
+      "test": "gpu_fallback",
+      "exit_code": 0,
+      "seconds": 3.9
+    },
+    {
+      "test": "terrain",
+      "exit_code": 0,
+      "seconds": 29.3
+    },
+    {
+      "test": "hazard",
+      "exit_code": 0,
+      "seconds": 16.5
+    },
+    {
+      "test": "improvements",
+      "exit_code": 0,
+      "seconds": 32.2
+    },
+    {
+      "test": "master_prompt",
+      "exit_code": 0,
+      "seconds": 13.2
+    }
+  ],
+  "source_reports": [
+    "GLOBAL_DEM_VALIDATION.json",
+    "MASTER_HORIZONS_SPOT_CHECK.json",
+    "MASTER_SOURCE_ACCESS.json"
+  ],
+  "regression_fixed": "An initial immediate-reload test exposed deferred URL synchronization; useLayoutEffect now records the displayed selection before paint. The unchanged regression and full journey passed afterward.",
+  "console": "No application errors or warnings in tested workflows; headless software-renderer ReadPixels performance notice excluded.",
+  "hardware_limits": [
+    "No physical headset test",
+    "Mobile viewport emulation, not physical-device performance"
+  ]
+}

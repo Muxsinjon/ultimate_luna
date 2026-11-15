@@ -125,7 +125,7 @@ export type { Body, VisModel }
 
 export interface NextEvent {
   kind: 'Sunrise' | 'Sunset' | 'Earthrise' | 'Earthset'
-  /** first hourly sample in the new state (the event happened in the hour before), or null if none before the data ends */
+  /** first hourly sample in the new state (the event happened in the hour before), or null if none before the search limit or data end */
   time: number | null
   /** last hourly sample still in the old state */
   after: number | null

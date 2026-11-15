@@ -1,5 +1,7 @@
 # LunaWindow scientific data inventory
 
+Latest source check: [master-prompt acceptance](MASTER_PROMPT_ACCEPTANCE.md) includes an independent full-grid global LOLA comparison, fresh JPL observer checks and access results for the attached source directory. Historical acquisition records below retain their original dates.
+
 Updated 2026-11-14. Reference directory: user-supplied `Lunar_Landing_Navigator_NASA_JPL_Data_Sources.docx` (17 categories). That document is a discovery directory, not verification. Status below distinguishes existing integration, newly verified products and future/uninspected collections. No remote publication is implied.
 
 ## Redesign imagery (story scene)

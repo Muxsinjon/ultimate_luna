@@ -113,6 +113,7 @@ export default function ExploreCompare() {
           </div>
         </div>
 
+        <TimeBar />
         <Suspense fallback={<Skeleton h={440} />}>
           <ErrorBoundary label="The Moon globe">
             <MoonGlobe />
@@ -135,7 +136,6 @@ export default function ExploreCompare() {
             azStepDeg={data.sites.azStepDeg}
           />
         </div>
-        <TimeBar />
         {s.mode === 'explore' && (
           <aside className="explain" aria-label="Plain-language explanation">
             <h3>What you are seeing</h3>
@@ -152,12 +152,8 @@ export default function ExploreCompare() {
             </p>
           </aside>
         )}
-        {!s.full && (
-          <button className="btn" onClick={() => set({ full: true })}>
-            Show charts and detailed comparison
-          </button>
-        )}
-        <div className="adv">
+        <details className="science-details" open={s.full}>
+          <summary>Sun and Earth charts, visibility timeline and site comparison</summary>
           <ElevationChart
             body="sun"
             t0={t0}
@@ -178,7 +174,7 @@ export default function ExploreCompare() {
           />
           <CompareLanes a={ra.samples} b={rb.samples} t0={t0} t1={t1} />
           <CompareTable A={ra.sum} B={rb.sum} nameA={A.name} nameB={B.name} />
-        </div>
+        </details>
         <details className="more adv">
           <summary>Compare the same site on different dates</summary>
           <Suspense fallback={<Skeleton h={200} />}>

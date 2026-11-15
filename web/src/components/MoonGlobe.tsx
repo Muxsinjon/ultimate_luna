@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
 import { globeCoordinates, globePoint, moonToGlobe } from '../lib/globe'
+import { loadGlobalDem } from '../lib/data'
+import { globalElevation, lunarDisplayRadius } from '../lib/globalTerrain'
 import { vectorsAt } from '../lib/analysis'
 import { loadTerrainIndex, terrainSiteFor, type TerrainIndex } from '../lib/terrainMesh'
 import { useStore } from '../lib/store'
@@ -17,6 +19,7 @@ export default function MoonGlobe() {
   const [error, setError] = useState('')
   const [index, setIndex] = useState<TerrainIndex | null>(null)
   const [lighting, setLighting] = useState(false)
+  const [terrainStatus, setTerrainStatus] = useState('Loading verified global LOLA elevation…')
   const host = useRef<HTMLDivElement>(null)
   const savedCamera = useRef<[number, number, number] | null>(null)
   const api = useRef<{ focus: (p: Point) => void; zoom: (factor: number) => void; update: () => void } | null>(null)
@@ -71,7 +74,7 @@ export default function MoonGlobe() {
     controls.maxDistance = 5
     controls.enableDamping = false
     controls.rotateSpeed = 0.65
-    const geometry = new THREE.SphereGeometry(1, 96, 64)
+    const geometry = new THREE.SphereGeometry(1, 720, 360)
     const material = new THREE.MeshLambertMaterial({ color: cssVar('--c-moon') })
     const moon = new THREE.Mesh(geometry, material)
     scene.add(moon)
@@ -131,6 +134,35 @@ export default function MoonGlobe() {
       },
       update,
     }
+    void loadGlobalDem().then(
+      (dem) => {
+        if (disposed) return
+        const positions = geometry.getAttribute('position')
+        let min = Infinity,
+          max = -Infinity
+        for (let i = 0; i < positions.count; i++) {
+          const p = globeCoordinates([positions.getX(i), positions.getY(i), positions.getZ(i)])
+          const h = globalElevation(dem, p.lat, p.lon)
+          const radius = lunarDisplayRadius(h)
+          positions.setXYZ(i, ...globePoint(p.lat, p.lon, radius))
+          min = Math.min(min, h)
+          max = Math.max(max, h)
+        }
+        positions.needsUpdate = true
+        geometry.computeVertexNormals()
+        geometry.computeBoundingSphere()
+        canvas.dataset.terrain = 'LOLA LDEM_16'
+        canvas.dataset.elevationRange = JSON.stringify([min, max])
+        setTerrainStatus('Real LOLA elevation · true vertical scale · 0.5° display mesh (about 15 km at the equator)')
+        render()
+      },
+      () => {
+        if (!disposed)
+          setTerrainStatus(
+            'Elevation unavailable: showing a spherical imagery globe only. Retry by reloading; location tools remain available.',
+          )
+      },
+    )
     const ray = new THREE.Raycaster()
     const pick = (x: number, y: number) => {
       ray.setFromCamera(new THREE.Vector2(x, y), camera)
@@ -307,6 +339,14 @@ export default function MoonGlobe() {
           </div>
         </div>
       </div>
+      <p className="small muted" role="status" data-testid="global-terrain-source">
+        {terrainStatus}. Source:{' '}
+        <a href="https://pds-geosciences.wustl.edu/missions/lro/lola.htm" target="_blank" rel="noreferrer">
+          NASA PDS / LRO LOLA
+        </a>
+        ; LDEM_16 reduced to a 4-pixel/degree elevation grid. Detailed local meshes use separate 5 m source data. Global relief is subtle at
+        true lunar scale.
+      </p>
       <p className="small muted">
         Drag to rotate · scroll or pinch to zoom · click a point to select. Keyboard: arrows rotate, Enter selects the centre. Neutral
         marker = Site A, pink = Site B, gold = selection. Use the site lists or coordinate entry for precise selection.

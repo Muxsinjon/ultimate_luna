@@ -99,7 +99,7 @@ export default function Header() {
         >
           {s.full ? 'Simple view' : 'Show all controls'}
         </button>
-        <div className="adv adv-inline">
+        <div className="adv-inline">
           <Seg<VisModel>
             label="Visibility model"
             value={s.vis}
@@ -109,6 +109,8 @@ export default function Header() {
               ['geometric', 'Geometric 0°'],
             ]}
           />
+        </div>
+        <div className="adv adv-inline">
           <Seg<Mode>
             label="Audience"
             value={s.mode}

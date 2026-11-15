@@ -1,4 +1,4 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useState } from 'react'
+import { Suspense, lazy, useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import GuideStrip from './components/GuideStrip'
 import type { AppData, Site } from './lib/data'
 import { loadCore } from './lib/data'
@@ -179,8 +179,8 @@ function Shell({ data, theme, setTheme }: { data: AppData; theme: Theme; setThem
   )
   const ready = ![s.siteA, s.siteB].some((id) => id.startsWith('custom:') && !custom.some((c) => c.id === id))
 
-  // URL ← state
-  useEffect(() => {
+  // URL ← state before paint: an immediate reload or copied link must preserve the displayed selection.
+  useLayoutEffect(() => {
     const h = toHash(s)
     if (h !== window.location.hash) window.history.replaceState(null, '', h)
   }, [s])
@@ -280,6 +280,11 @@ function Shell({ data, theme, setTheme }: { data: AppData; theme: Theme; setThem
           <Header />
           <main id="view" tabIndex={-1}>
             <GuideStrip ws={s.ws} />
+            {notice && s.ws !== 'compare' && (
+              <p className="panel field-error" role="status">
+                {notice}
+              </p>
+            )}
             <ErrorBoundary key={s.ws} label={label[s.ws]}>
               <Suspense
                 fallback={

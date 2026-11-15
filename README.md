@@ -29,10 +29,12 @@ It is a preliminary tool and does not certify landing safety.
 
 **Final demo and release evidence:** [docs/DEMO_SCRIPT.md](docs/DEMO_SCRIPT.md) · [docs/MILESTONE9_ACCEPTANCE.md](docs/MILESTONE9_ACCEPTANCE.md) · [docs/SUBMISSION.md](docs/SUBMISSION.md) · [CHANGELOG.md](CHANGELOG.md)
 
+**Latest master-prompt implementation:** [requirements, source verification, tests and limitations](docs/MASTER_PROMPT_ACCEPTANCE.md). The whole-Moon selector now uses real LOLA elevation at true scale; detailed surface meshes remain limited to the three processed crops.
+
 ## Workspaces (one shared mission state, in the URL)
 - **Welcome:** choose "Explore landing sites" or "Plan a lunar mission", or **Try the guided demo**, a 10-step walkthrough on real data.
 - **Explore & Compare:**
-  - Site A vs Site B from 17 cited sites (or your own coordinates, or a click on the rotatable 3D Moon).
+  - Site A vs Site B from 19 cited sites (or your own coordinates, or a click on the rotatable 3D Moon).
   - Mission start, a 1/3/7/14/30-day duration and a shared time bar (previous/next hour, play, speed).
   - Status per site: Sun and Earth azimuth and elevation, visible or not, next rise or set as an hour window.
   - **Sun elevation and Earth elevation vs time** charts for both sites, with a 0° line, tooltips and a synced cursor.
@@ -90,8 +92,8 @@ flowchart LR
   D --> G --> U
 ```
 
-1. **Sun and Earth.** For every hour from 2023 to 2031, Horizons gives the sub-solar and sub-Earth points on the Moon in the body-fixed frame. The browser turns them into azimuth and elevation for *any* lunar coordinate, including libration. A 6-hour file is shipped and interpolated back to hourly in the browser, which adds no measurable error.
-2. **Real horizon.** For each site we cast 720 rays out to 250 km over LOLA terrain, using exact spherical geometry: the curvature drop d²/2R with R = 1737.4 km, no refraction. Custom spots are computed in the browser from a 960 m grid.
+1. **Sun and Earth.** For every hour from 2023 to 2031, Horizons gives the sub-solar and sub-Earth points on the Moon in the body-fixed frame. The browser turns them into azimuth and elevation for *any* lunar coordinate, including libration. A 6-hour file is shipped and interpolated back to hourly in the browser, with measured elevation differences below 0.001° for the Sun and 0.006° for Earth at tested epochs.
+2. **Real horizon.** For each site we cast 720 rays out to 250 km over LOLA terrain, using exact spherical geometry (leading curvature term d²/2R) with R = 1737.4 km, no refraction. Custom spots are computed in the browser from a 960 m south-pole grid or the coarser 4-pixel/degree global grid.
 3. **Mission meaning.** Sunrise and sunset happen when the **upper limb** crosses the terrain. Partial visibility is the disc area above the horizon. From these windows we derive countdowns, the operations window, the longest dark period, power and the landing calendar.
 
 ## Validation (details: [docs/VALIDATION.md](docs/VALIDATION.md))
@@ -104,39 +106,44 @@ flowchart LR
 
 ## Run locally
 ```bash
-cd web
-npm ci
-npm run dev        # http://localhost:5173
-npm test           # 127 unit tests (physics, terrain, hazards, shadows, finder, astronomy vs Horizons, state)
-npm run lint && npm run build
+npm --prefix web ci
+npm --prefix web run dev        # http://localhost:5173
+# In another terminal, from the repository root:
+npm --prefix web test           # 150 unit tests
+npm --prefix web run lint
+npm --prefix web run build
 ```
 
 Playwright smoke tests (Python):
 ```bash
 pip install playwright && python -m playwright install chromium
-cd web && npx vite preview --port 4173 &
-python ../tests/e2e/smoke_test.py http://localhost:4173/
-python ../tests/e2e/journey_test.py http://localhost:4173/   # full release journey, offline, writes docs/screenshots/demo
+npm --prefix web run preview -- --port 4173
+# In another terminal, from the repository root:
+python tests/e2e/smoke_test.py http://localhost:4173/
+python tests/e2e/master_prompt_test.py http://localhost:4173/
+python tests/e2e/journey_test.py http://localhost:4173/   # full release journey, offline, writes docs/screenshots/demo
 ```
 The other browser suites in `tests/e2e/` (terrain, hazard, compare, astronomy, lighting, finder, surface 3D, science, no-WebGL) use the same command. The terrain and science scripts need the pipeline environment (`pipeline/.venv`, numpy and rasterio).
 
 Rebuild the data (about 200 MB of NASA downloads into `pipeline/raw/`, which is gitignored):
 ```bash
 cd pipeline
-python -m venv .venv && .venv/Scripts/pip install numpy requests rasterio pyproj playwright
-.venv/Scripts/python fetch_ephemeris.py       # JPL Horizons -> ephem.bin
-.venv/Scripts/python horizon_mask.py          # LOLA -> sites.json, browser DEMs
-.venv/Scripts/python export_overlays.py       # PGDA -> map overlays
-.venv/Scripts/python validate_ephemeris.py    # vs Horizons topocentric
-.venv/Scripts/python validate_illumination.py # vs PGDA maps
-.venv/Scripts/python validate_missions.py     # Chandrayaan-3
-.venv/Scripts/python validation_table.py      # docs/VALIDATION.md + test fixture
-.venv/Scripts/python make_brand_assets.py     # OG image and favicons
+python -m venv .venv
+. .venv/bin/activate  # Windows: .venv\Scripts\activate
+python -m pip install numpy requests rasterio pyproj playwright
+python fetch_ephemeris.py       # JPL Horizons -> ephem.bin
+python horizon_mask.py          # LOLA -> sites.json, browser DEMs
+python export_overlays.py       # PGDA -> map overlays
+python validate_ephemeris.py    # vs Horizons topocentric
+python validate_illumination.py # vs PGDA maps
+python validate_missions.py     # Chandrayaan-3
+python validation_table.py      # docs/VALIDATION.md + test fixture
+python make_brand_assets.py     # OG image and favicons
 ```
-The DEMs come from `http://imbrium.mit.edu/DATA/LOLA_GDR/` (`POLAR/IMG/LDEM_75S_240M.*`, `CYLINDRICAL/IMG/LDEM_16.*`). The illumination maps come from `https://pgda.gsfc.nasa.gov/data/MoonIllumination/` (`AVGVISIB_75S_120M_201608.TIF`, `..._EARTH.TIF`).
+The DEMs come from `https://imbrium.mit.edu/DATA/LOLA_GDR/` (`POLAR/IMG/LDEM_75S_240M.*`, `CYLINDRICAL/IMG/LDEM_16.*`). The illumination maps come from `https://pgda.gsfc.nasa.gov/data/MoonIllumination/` (`AVGVISIB_75S_120M_201608.TIF`, `..._EARTH.TIF`).
 
 ## Deploy
-`.github/workflows/pages.yml` builds, tests and publishes to GitHub Pages, but in `new_luna` it is **manual-only** (`workflow_dispatch`) so nothing is deployed without a decision. To publish, set Pages to use GitHub Actions in the repository settings, then run the workflow. The static build in `web/dist/` uses relative asset paths (`base: './'`), so any static host can serve it from any sub-path. `ci.yml` runs lint, format check, unit tests, build and the Playwright smoke tests.
+`.github/workflows/pages.yml` builds, tests and publishes to GitHub Pages, and is **manual-only** (`workflow_dispatch`) so nothing is deployed without a decision. To publish, set Pages to use GitHub Actions in the repository settings, then run the workflow. The static build in `web/dist/` uses relative asset paths (`base: './'`), so any static host can serve it from any sub-path. `ci.yml` runs lint, format check, unit tests, build and the Playwright smoke tests.
 
 ## Tech stack
 TypeScript (strict), React 19 API (Preact runtime in production builds), hand-written SVG charts, Vite, Vitest, ESLint, Prettier, hand-written SVG and canvas charts, and Python (NumPy, rasterio, Playwright) for the data pipeline. Design system: [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md).
@@ -144,7 +151,7 @@ TypeScript (strict), React 19 API (Preact runtime in production builds), hand-wr
 ## References
 **NASA data**
 - JPL Horizons System, DE441. https://ssd.jpl.nasa.gov/horizons/ (API retrieved 2026-11-14)
-- LRO LOLA Gridded Data Records LDEM_75S_240M and LDEM_16 (Smith et al., LOLA team), NASA PDS. http://imbrium.mit.edu/DATA/LOLA_GDR/
+- LRO LOLA Gridded Data Records LDEM_75S_240M and LDEM_16 (Smith et al., LOLA team), NASA PDS. https://imbrium.mit.edu/DATA/LOLA_GDR/
 - Mazarico, E., Neumann, G. A., Smith, D. E., Zuber, M. T., Torrence, M. H. (2011). Illumination conditions of the lunar polar regions using LOLA topography. *Icarus* 211, 1066–1081. Data: https://pgda.gsfc.nasa.gov/products/69
 - Barker, M. K. et al. (2021). Improved LOLA elevation maps for south pole landing sites. NASA GSFC PGDA product 78 (5 m site DEMs, slope, uncertainty): https://pgda.gsfc.nasa.gov/products/78
 - Barker, M. K. et al. A new view of the lunar south pole from LOLA. PGDA product 90 (LPSR permanently shadowed regions, 20 m): https://pgda.gsfc.nasa.gov/products/90

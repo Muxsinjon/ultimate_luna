@@ -50,11 +50,23 @@ export default function Welcome() {
       </Suspense>
       <section className="story-step hero">
         <p className="story-kicker">LunaWindow</p>
-        <h1>
-          Launching to the Moon?
-          <span>First, choose where to land.</span>
-        </h1>
-        <p className="story-lede">Scroll to see why the place and the time matter.</p>
+        <h1>LunaWindow — Find the Right Place and Time to Land on the Moon</h1>
+        <p className="story-lede">
+          Explore lunar landing sites, investigate sunlight and Earth visibility, identify favorable mission windows, and experience the
+          Moon from the surface.
+        </p>
+        <div className="welcome-entry">
+          <button className="btn primary" onClick={() => go({ ws: 'compare' })}>
+            Explore landing sites
+          </button>
+          <button className="btn" onClick={() => go({ ws: 'finder' })}>
+            Plan a lunar mission
+          </button>
+          <button className="btn" onClick={startDemo}>
+            Try the guided demo
+          </button>
+        </div>
+        <p className="small">Verified NASA/JPL data · No account required · Desktop and mobile</p>
         <button type="button" className="btn quiet" onClick={() => go({ ws: 'compare' })}>
           Skip to the tools
         </button>
@@ -98,7 +110,7 @@ export default function Welcome() {
         <h2>Pick a place and a time, and see why.</h2>
         <div className="story-actions">
           <button type="button" className="entry-card" onClick={() => go({ ws: 'compare' })}>
-            <span className="entry-title">Explore landing sites</span>
+            <span className="entry-title">Start comparing sites</span>
             <span className="entry-text">Sunlight and Earth, hour by hour, for two sites.</span>
           </button>
           <button type="button" className="entry-card" onClick={() => go({ ws: 'finder' })}>
@@ -115,7 +127,7 @@ export default function Welcome() {
           </button>
         </div>
         <button type="button" className="btn primary" onClick={startDemo}>
-          Try the guided demo
+          Start the walkthrough
         </button>
         <p className="story-credit">
           Imagery: NASA LRO (Moon), Blue Marble (Earth), SDO (Sun), Hipparcos/Tycho star map. Directions and lighting from JPL Horizons;

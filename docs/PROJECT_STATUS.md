@@ -4,7 +4,11 @@
 
 User-authorized destination: https://github.com/Muxsinjon/ultimate_luna. Review site: https://muxsinjon.github.io/ultimate_luna/. The original `new_luna` repository remains unchanged. See [deployment instructions](DEPLOYMENT.md); the local improvement notes below record the preceding implementation phase.
 
-## Current local improvement pass — 2026-11-15
+## Current master-prompt release — 2026-11-15
+
+The supplied master prompt is implemented and checked against the attached NASA/JPL directory. This pass adds measured global LOLA geometry, simpler access to required science controls, consistent surface-model handoffs and scientific asset integrity checks. See [requirement traceability, source reports, validation and explicit limits](MASTER_PROMPT_ACCEPTANCE.md). The earlier local-only pass below was subsequently published to `ultimate_luna`.
+
+## Earlier local improvement pass — 2026-11-15
 
 The separate local implementation based on upstream `42bcf0c` fixes the five reproduced audit defects and adds whole-Moon selection, a simpler dashboard and connected terrain planning. See [local changes, validation and limitations](LOCAL_IMPROVEMENTS.md). Nothing from this pass has been pushed or deployed. Historical milestone completion statements below describe the earlier milestone work; they do not establish physical-headset validation or fresh acceptance of every optional dataset.
 

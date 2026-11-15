@@ -33,12 +33,12 @@ with sync_playwright() as p:
     page.on("pageerror", lambda e: console.append(f"pageerror: {e}"))
 
     def simple_view():
-        """Simple view (default for new visitors) hides expert settings; the header switch reveals them."""
+        """Simple view exposes mandatory mission constraints and model; the header reveals optional expert settings."""
         page.goto(BASE + "#ui=simple&ws=finder")
         page.reload()
         expect(page.get_by_text("Minimum sunlight")).to_be_visible()
-        expect(page.get_by_text("Maximum communication blackout")).to_be_hidden()
-        expect(page.get_by_role("radiogroup", name="Visibility model")).to_be_hidden()
+        expect(page.get_by_text("Maximum communication blackout")).to_be_visible()
+        expect(page.get_by_role("radiogroup", name="Visibility model")).to_be_visible()
         page.get_by_role("button", name="Show all controls").click()
         expect(page.get_by_text("Maximum communication blackout")).to_be_visible()
         expect(page).to_have_url(re.compile(r"ui=full"))
@@ -46,7 +46,7 @@ with sync_playwright() as p:
     def welcome():
         page.goto(BASE + "#ui=full&ws=home")
         page.wait_for_load_state("networkidle")
-        expect(page.get_by_role("heading", name=re.compile("Launching to the Moon"))).to_be_visible()
+        expect(page.get_by_role("heading", name=re.compile("Find the Right Place and Time to Land on the Moon"))).to_be_visible()
         page.get_by_role("button", name=re.compile("^Explore landing sites")).click()
         expect(page.get_by_role("heading", name="Explore and compare")).to_be_visible()
         expect(page).to_have_url(re.compile(r"ws=compare"))
@@ -134,7 +134,7 @@ with sync_playwright() as p:
         expect(page.get_by_role("heading", name="Supported sites and dates")).to_be_visible()
 
     for name, fn in [
-        ("simple view hides expert settings", simple_view),
+        ("simple view exposes required science controls", simple_view),
         ("welcome screen and entry", welcome),
         ("pick two sites, elevation charts", pick_sites),
         ("scrub time (buttons and keyboard)", scrub_time),

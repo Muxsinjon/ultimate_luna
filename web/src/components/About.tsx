@@ -5,7 +5,7 @@ import MissionCheck from './MissionCheck'
 const LINKS = {
   horizons: 'https://ssd.jpl.nasa.gov/horizons/',
   lola: 'https://pds-geosciences.wustl.edu/missions/lro/lola.htm',
-  lolaGdr: 'http://imbrium.mit.edu/DATA/LOLA_GDR/',
+  lolaGdr: 'https://imbrium.mit.edu/DATA/LOLA_GDR/',
   pgda: 'https://pgda.gsfc.nasa.gov/products/69',
   quickmap: 'https://quickmap.lroc.asu.edu/',
   repoValidation: 'docs/VALIDATION.md',
@@ -17,17 +17,18 @@ export default function About({ data }: { data: AppData }) {
     <article className="about prose" aria-labelledby="about-title">
       <h2 id="about-title">About LunaWindow: data and methodology</h2>
       <p className="lede">
-        Every number in this tool comes from free NASA data and is checked against independent NASA references. Here is exactly how, and
-        where it can be wrong.
+        Scientific results are calculated from public NASA data and compared with independent reference observations. Mission thresholds are
+        your illustrative requirements. Here is how the calculations work, and where they can be wrong.
       </p>
 
       <h3>How it works</h3>
       <ol>
         <li>
           <b>Where are the Sun and Earth?</b> We asked NASA/JPL Horizons (DE441) for the sub-solar and sub-Earth points on the Moon every
-          hour from 2023 to 2031, in the Moon’s body-fixed frame (shipped every 6 h and interpolated back to hourly in the browser, adding
-          no measurable error). From these the browser computes the Sun’s and Earth’s azimuth and elevation for any lunar coordinate,
-          including libration (Earth’s monthly wobble in the lunar sky).
+          hour from 2023 to 2031, in the Moon’s body-fixed frame (shipped every 6 h and interpolated back to hourly in the browser).
+          Validation against Horizons found elevation differences below 0.001° for the Sun and 0.006° for Earth at the tested epochs. From
+          these the browser computes the Sun’s and Earth’s azimuth and elevation for any lunar coordinate, including libration (Earth’s
+          monthly wobble in the lunar sky).
         </li>
         <li>
           <b>Where is the real horizon?</b> At the south pole the Sun skims the horizon, often less than 2° up, so a smooth-sphere horizon
@@ -93,7 +94,7 @@ export default function About({ data }: { data: AppData }) {
             <td>
               <a href={LINKS.lolaGdr}>LOLA gridded topography</a>: LDEM_75S_240M, LDEM_16
             </td>
-            <td>Terrain horizons; the polar map hillshade</td>
+            <td>Terrain horizons, polar hillshade and the global Moon’s measured shape</td>
             <td>NASA LRO / LOLA team, via the PDS</td>
           </tr>
           <tr>
@@ -110,6 +111,20 @@ export default function About({ data }: { data: AppData }) {
           </tr>
         </tbody>
       </table>
+
+      <h3>Global shape and local terrain resolution</h3>
+      <p>
+        The rotating Moon uses real LOLA LDEM_16 elevations at true vertical scale, reduced from 16 to 4 pixels per degree. Its 0.5° display
+        mesh is about 15 km across at the equator; relief is subtle at this scale. All 1,036,800 shipped elevation samples matched an
+        independent reduction of the official PDS source. This verifies the processing, not the accuracy of every source measurement. The
+        texture is lunar imagery, not an elevation measurement.
+      </p>
+      <p>
+        Detailed 3D surface views cover three separate 8 km crops: Connecting Ridge, Shackleton Rim and Nobile Rim 1. They use NASA PGDA 5 m
+        source grids displayed as 20 m meshes. Other locations use a terrain-horizon panorama; they do not gain 5 m coverage from the global
+        globe. Core scientific files are checked against their published SHA-256 manifest before use. Missing or damaged data produces an
+        error, not favorable mission conditions.
+      </p>
 
       <h3>Validation</h3>
       <p>
@@ -209,7 +224,7 @@ export default function About({ data }: { data: AppData }) {
         </li>
         <li>
           The ephemeris covers 2023-01-01 00:00 to 2031-12-31 18:00 UTC at 1-hour steps (the last shipped 6-hourly row). Times outside are
-          never extrapolated. Sun directions agree with JPL Horizons within 0.001° and Earth directions within 0.006°.
+          never extrapolated. Sun elevations agree with JPL Horizons within 0.001° and Earth elevations within 0.006° at the tested epochs.
         </li>
         <li>
           Hourly sampling, checked against 10-minute sampling at all nine polar sites over 2023–2031: the share of time with sunlight or

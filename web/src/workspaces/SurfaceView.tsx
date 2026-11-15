@@ -33,7 +33,7 @@ export default function SurfaceView() {
   }, [])
   const terrainIndexed = terrainIdx !== null
   const terrainInfo = terrainIdx ? terrainSiteFor(terrainIdx.sites, st.id, st.lat, st.lon) : null
-  const show3d = s.surface3d && !!terrainInfo
+  const show3d = s.surface3d && !!terrainInfo && s.vis === 'terrain'
   const now = useMemo(() => sampleAt(ctx, data.eph, s.selectedTime), [ctx, data, s.selectedTime])
   const [view, setView] = useState({ az: now.sunAz, el: 5 })
   const [fov, setFov] = useState(90)
@@ -140,12 +140,18 @@ export default function SurfaceView() {
             role="radio"
             aria-checked={show3d}
             className={show3d ? 'on' : ''}
-            disabled={!terrainInfo}
+            disabled={!terrainInfo || s.vis !== 'terrain'}
             onClick={() => set({ surface3d: true })}
           >
             3D first person (5 m terrain)
           </button>
         </div>
+        {s.vis === 'geometric' && (
+          <p className="hint">
+            Geometric mode uses the 0° horizon panorama, matching the charts. Choose Terrain-aware above to inspect the real 3D ground and
+            local obstruction.
+          </p>
+        )}
         {!terrainInfo && terrainIndexed && (
           <section className="panel">
             <p className="hint" data-testid="fp-unavailable">

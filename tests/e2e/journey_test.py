@@ -53,7 +53,7 @@ with sync_playwright() as p:
 
     # 1. landing page: discover real sites
     page.goto(a.base + "#ui=full")
-    expect(page.get_by_role('heading', name=re.compile('Launching to the Moon'))).to_be_visible(timeout=30000)
+    expect(page.get_by_role('heading', name=re.compile('Find the Right Place and Time to Land on the Moon'))).to_be_visible(timeout=30000)
     audit('welcome'); shot('01-welcome')
     page.get_by_role('button', name=re.compile('^Explore landing sites')).click()
     page.get_by_label('Site A', exact=True).select_option('shackleton-rim-site04')
