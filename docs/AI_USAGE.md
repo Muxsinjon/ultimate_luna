@@ -2,7 +2,7 @@
 
 This log supports the Space Apps "Use of Super Intelligence (SI)" disclosure.
 
-**Tool:** Claude (Anthropic), used as a coding and research assistant inside Claude Code.
+**Tools:** Claude (Anthropic) and OpenAI Codex, used as coding and research assistants; tasks are recorded below.
 
 **What the team did:** the team chose the challenge, the concept (terrain-aware Sun/Earth visibility, slip analysis, the validation approach) and the priorities. The AI implemented and debugged code, searched documentation, and drafted docs on request. Every number in the app is computed from NASA data and checked against independent NASA references (`docs/VALIDATION.md`). No AI-generated images, audio or video are used in the app; the favicon and OG image are hand-coded SVG.
 
@@ -71,3 +71,5 @@ Publication attempt outcome: both GitHub GraphQL and REST repository creation we
 After the owner created `Muxsinjon/ultimate_luna`, access was verified with push and administration permissions. Continued the authorized publication to `main` and GitHub Pages; no changes to the original `new_luna` repository.
 
 | 2026-11-15 | OpenAI Codex: implemented the supplied master prompt in Ultimate Luna. Independently checked all global LOLA samples and fresh JPL observer directions; added true-scale global elevation geometry, direct welcome actions, accessible scientific controls, shared surface-model handoffs, input and SHA-256 integrity checks, regression tests, source/requirement documentation and release verification. Retained the earlier validated milestone engine; no generated scientific imagery or invented data. | `web/src/{lib,components,workspaces}`, `pipeline/verify_{global_dem,browser_data}.py`, `tests/e2e/master_prompt_test.py`, workflows, `docs/MASTER_PROMPT_ACCEPTANCE.md`, `docs/data/{GLOBAL_DEM_VALIDATION,MASTER_HORIZONS_SPOT_CHECK,MASTER_SOURCE_ACCESS}.json`, README |
+
+| 2026-11-15 | OpenAI Codex: audited submission readiness after the user asked for assurance. Corrected stale project links and AI credits, marked historical checklists, identified missing team/demo/submission details and three flagged optional coordinates. Attempted a fresh official-guide check; HTTP 503 prevented reconfirming rules. Application and scientific data unchanged. | `README.md`, `docs/{SUBMISSION,HANDOFF_CHECKLIST,QUALITY_CHECKLIST,AI_USAGE}.md` |

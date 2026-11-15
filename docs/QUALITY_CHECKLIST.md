@@ -1,5 +1,7 @@
 # Quality checklist (release gate)
 
+**Historical checklist:** current release evidence and remaining limits are documented in [MASTER_PROMPT_ACCEPTANCE.md](MASTER_PROMPT_ACCEPTANCE.md). The current public application is `ultimate_luna`; the older test totals, deployment links and Lighthouse scores below are not current-release measurements. See [SUBMISSION.md](SUBMISSION.md) for unfinished submission tasks.
+
 Each ticked item was verified on 2026-11-14; the evidence follows each item.
 
 - [x] `npm run build` succeeds with zero TypeScript errors and `npm run lint` reports zero errors. Prettier check clean. (Re-verified after the LunaWindow build.)

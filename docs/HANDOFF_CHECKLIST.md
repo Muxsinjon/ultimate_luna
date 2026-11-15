@@ -1,5 +1,7 @@
 # LunaWindow handoff checklist (for the next assistant, e.g. GPT)
 
+**Superseded release record:** the current repository is https://github.com/Muxsinjon/ultimate_luna and the live app is https://muxsinjon.github.io/ultimate_luna/. Current validation is in [MASTER_PROMPT_ACCEPTANCE.md](MASTER_PROMPT_ACCEPTANCE.md): 150 unit tests, 13 browser suites, 27 Python passes and 7 explicit optional-source skips. The older details below are historical. Submission packaging is still incomplete; see the updated [submission kit](SUBMISSION.md). Its recorded deadline/rules could not be freshly reconfirmed because the official guide returned HTTP 503 on 2026-11-15.
+
 Status on 2026-11-15:
 - **Repository:** https://github.com/Muxsinjon/new_luna (public), branch `main`.
 - **Live site:** https://muxsinjon.github.io/new_luna/ (GitHub Pages, deployed by hand: Actions → "Deploy to GitHub Pages" → Run workflow).

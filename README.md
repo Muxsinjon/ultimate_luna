@@ -173,7 +173,7 @@ TypeScript (strict), React 19 API (Preact runtime in production builds), hand-wr
 **Images:** all original. The favicon and OG image are SVG drawn by code from our own LOLA horizon data; the code was written with AI assistance, and the OG image says so visibly. No NASA logos or insignia are used, and no image-generator output.
 
 ## Use of AI
-We used an AI coding assistant (Anthropic Claude) for code, tests, data-processing scripts and documentation, under the team's direction. The team chose the idea and approach. Every task is logged with dates and files in [docs/AI_USAGE.md](docs/AI_USAGE.md). The same disclosure is in machine-readable metadata: an `ai-assistance` meta tag in `web/index.html` and `provenance.aiDisclosure` in every exported JSON, as the 2026 Space Apps rules require. Scientific values are computed from NASA/JPL data by the documented pipeline and validated against independent references; they are not AI-generated.
+We used AI coding assistants (Anthropic Claude and OpenAI Codex) for code, tests, data-processing scripts and documentation, under the team's direction. The team chose the idea and approach. Every task is logged with dates and files in [docs/AI_USAGE.md](docs/AI_USAGE.md). The same disclosure is in machine-readable metadata: an `ai-assistance` meta tag in `web/index.html` and `provenance.aiDisclosure` in every exported JSON, as the 2026 Space Apps rules require. Scientific values are computed from NASA/JPL data by the documented pipeline and validated against independent references; they are not AI-generated.
 
 ## Team
 _Add team member names and roles here._
