@@ -67,3 +67,5 @@ This log supports the Space Apps "Use of Super Intelligence (SI)" disclosure.
 | 2026-11-15 | OpenAI Codex: user-authorized publication of the improved project to a new `Muxsinjon/ultimate_luna` repository and GitHub Pages review website. Updated repository/deployment documentation; retained manual deployment and the existing test/build gate. | `README.md`, `docs/{DEPLOYMENT,LOCAL_IMPROVEMENTS,PROJECT_STATUS,AI_USAGE}.md`, `.github/workflows/pages.yml` |
 
 Publication attempt outcome: both GitHub GraphQL and REST repository creation were denied by the integration permission boundary. No repository was created, and no push or deployment occurred. Local preparation is ready for the owner-created repository.
+
+After the owner created `Muxsinjon/ultimate_luna`, access was verified with push and administration permissions. Continued the authorized publication to `main` and GitHub Pages; no changes to the original `new_luna` repository.
