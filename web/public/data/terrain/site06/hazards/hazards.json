@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "width": 1601,
+  "height": 1601,
+  "x0": 80002.5,
+  "y0": 113997.5,
+  "dx": 5,
+  "dy": -5,
+  "sourceSha256": "cca17e8067601dd659b583f889204db6bce685bc30c60a9e62427a8bce36b03d",
+  "slopeSupportM": 15,
+  "roughnessSupportM": 25,
+  "quantum": 0.001,
+  "noData": 65535,
+  "method": "3x3 OLS plane slope; 5x5 OLS detrended radial-height RMS; complete native 5 m neighbourhoods; slope uses stereographic/elevation scale correction",
+  "assets": {
+    "slope": {
+      "file": "slope.u16",
+      "sha256": "906359d612f8ad523d5437e06539ed8af8a91275021f1b127444e49b0139c184",
+      "units": "degrees",
+      "min": 0.03747187400091301,
+      "max": 59.096172273169806
+    },
+    "roughness": {
+      "file": "roughness.u16",
+      "sha256": "fefd335d8b73a3ad4b7e45fd788b36a080c6ef73449b0a12643f2b738c56668b",
+      "units": "m",
+      "min": 0.0009311717769609031,
+      "max": 3.641642039869472
+    }
+  },
+  "points": [
+    {
+      "row": 0,
+      "col": 0,
+      "slope": 10.321719532407402,
+      "roughness": 0.14067263328097518
+    },
+    {
+      "row": 100,
+      "col": 200,
+      "slope": 6.816845306567708,
+      "roughness": 0.17691809193349725
+    },
+    {
+      "row": 800,
+      "col": 800,
+      "slope": 14.971018779432395,
+      "roughness": 0.055312608642616806
+    },
+    {
+      "row": 1600,
+      "col": 1600,
+      "slope": 28.017534563172255,
+      "roughness": 0.4696838705009232
+    },
+    {
+      "row": 913,
+      "col": 1101,
+      "slope": 25.82370664221382,
+      "roughness": 0.10701776083401138
+    }
+  ],
+  "officialComparison": {
+    "metadata": {
+      "width": 4000,
+      "height": 4000,
+      "dtype": "float32",
+      "resolutionM": [
+        5.0,
+        5.0
+      ],
+      "boundsM": [
+        74000.0,
+        100000.0,
+        94000.0,
+        120000.0
+      ],
+      "transform": [
+        5.0,
+        0.0,
+        74000.0,
+        0.0,
+        -5.0,
+        120000.0
+      ],
+      "crsWkt": "PROJCS[\"unknown\",GEOGCS[\"unknown\",DATUM[\"unknown\",SPHEROID[\"unknown\",1737400,0]],PRIMEM[\"Reference meridian\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-90],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",NORTH],AXIS[\"Northing\",NORTH]]",
+      "noData": "NaN",
+      "unitsMetadata": [
+        null
+      ],
+      "scales": [
+        1.0
+      ],
+      "offsets": [
+        0.0
+      ],
+      "tags": {
+        "NC_GLOBAL#Conventions": "COARDS, CF-1.5",
+        "NC_GLOBAL#GMT_version": "5.4.5 [64-bit]",
+        "NC_GLOBAL#history": "xyz2grd -bi3 -I5 -R7.40000000000e+04/9.40000000000e+04/1.00000000000e+05/1.20000000000e+05 -Gtest.grd -r",
+        "NC_GLOBAL#node_offset": "1",
+        "x#actual_range": "{74000,94000}",
+        "x#long_name": "x",
+        "y#actual_range": "{100000,120000}",
+        "y#long_name": "y",
+        "z#actual_range": "{0,67.64550018310547}",
+        "z#long_name": "z",
+        "z#_FillValue": "nan",
+        "AREA_OR_POINT": "Area"
+      }
+    },
+    "url": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site06/Site06_final_adj_5mpp_slp.tif",
+    "sha256": "47db26dc18aa8f253a7d281ccf86189bb8dfd2b33b8a5b7c20586e4877c24e0c",
+    "rmsDifferenceDeg": 0.4719912722975018,
+    "maxAbsDifferenceDeg": 27.6082495681861,
+    "note": "Different slope estimators/support may differ; official product is a comparison, not substituted ground truth."
+  },
+  "independentMaxDifference": 3.703493622886356e-10
+}

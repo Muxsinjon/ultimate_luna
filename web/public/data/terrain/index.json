@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "product": "https://pgda.gsfc.nasa.gov/products/78",
+  "citation": "Barker, M. K., et al. (2021). Improved LOLA elevation maps for south pole landing sites. PSS 203, 105119. doi:10.1016/j.pss.2020.105119",
+  "method": "Identical for every site: 8 x 8 km native 5 m crop; 20 m display mesh = every 4th native sample; 3x3 OLS slope (15 m support) and 5x5 detrended RMS roughness (25 m support) on the native grid.",
+  "sites": [
+    {
+      "id": "site01",
+      "name": "Connecting Ridge",
+      "product": "Site01",
+      "readmeName": "Connecting ridge",
+      "plannerId": "connecting-ridge",
+      "centre": {
+        "lat": -89.53432,
+        "lon": 209.94767
+      },
+      "centreSource": "Curated Connecting Ridge coordinate (Artemis III landing-site workshop 2023, abstract #2036), as in Milestone 1",
+      "extentM": [
+        8000.0,
+        8000.0
+      ],
+      "meshSpacingM": 20.0,
+      "nativeSpacingM": 5,
+      "sourceUrl": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site01/Site01_final_adj_5mpp_surf.tif",
+      "sourceSha256": "3ba7b97cb00a2bcf21189c3aeb535f65afc21207154ab9f0d43c5bdc1f7e747e"
+    },
+    {
+      "id": "site04",
+      "name": "Shackleton Rim",
+      "product": "Site04",
+      "readmeName": "Shackleton rim",
+      "plannerId": "shackleton-rim-site04",
+      "centre": {
+        "lat": -89.76674147713055,
+        "lon": 188.10719091700346
+      },
+      "centreSource": "Centre pixel of the NASA PGDA Site04 5 m DEM footprint (no independent landing coordinate is claimed)",
+      "extentM": [
+        8000.0,
+        8000.0
+      ],
+      "meshSpacingM": 20.0,
+      "nativeSpacingM": 5,
+      "sourceUrl": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site04/Site04_final_adj_5mpp_surf.tif",
+      "sourceSha256": "38ff70dbdf2f066c2cfa94a646c3a59d653ce7f6b4528b15fc1b43ee397ce758"
+    },
+    {
+      "id": "site06",
+      "name": "Nobile Rim 1",
+      "product": "Site06",
+      "readmeName": "Nobile rim 1",
+      "plannerId": "nobile-rim-1-site06",
+      "centre": {
+        "lat": -85.43811594434003,
+        "lon": 37.36812005733697
+      },
+      "centreSource": "Centre pixel of the NASA PGDA Site06 5 m DEM footprint (no independent landing coordinate is claimed)",
+      "extentM": [
+        8000.0,
+        8000.0
+      ],
+      "meshSpacingM": 20.0,
+      "nativeSpacingM": 5,
+      "sourceUrl": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site06/Site06_final_adj_5mpp_surf.tif",
+      "sourceSha256": "cca17e8067601dd659b583f889204db6bce685bc30c60a9e62427a8bce36b03d"
+    }
+  ]
+}

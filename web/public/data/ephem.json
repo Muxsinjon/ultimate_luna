@@ -1,0 +1,23 @@
+{
+  "startUtc": "2023-01-01T00:00:00Z",
+  "startMs": 1672531200000,
+  "stepMs": 3600000,
+  "count": 78888,
+  "columns": [
+    "earth_x_km",
+    "earth_y_km",
+    "earth_z_km",
+    "sun_x",
+    "sun_y",
+    "sun_z"
+  ],
+  "frame": "MOON_ME (IAU mean-Earth/polar-axis, east-longitude positive)",
+  "moonRadiusKm": 1737.4,
+  "sunRadiusKm": 695700.0,
+  "earthRadiusKm": 6371.0,
+  "meanSunDistanceKm": 149619731.00018632,
+  "source": "NASA/JPL Horizons API (DE441): target 301, center 500@399, quantities 14,15,19,20",
+  "generated": "2026-11-14T11:38:41+00:00",
+  "shipStepH": 6,
+  "shipCount": 13148
+}

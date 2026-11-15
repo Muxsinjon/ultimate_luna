@@ -1,0 +1,76 @@
+{
+  "sourceSha256": "3ba7b97cb00a2bcf21189c3aeb535f65afc21207154ab9f0d43c5bdc1f7e747e",
+  "toleranceAgainstSourceTriangleM": 0.01,
+  "picks": [
+    {
+      "lat": -89.53431950528338,
+      "lon": 209.94763956552532,
+      "x": -7049.356528112703,
+      "y": -12235.653082755336,
+      "native5mBilinearM": 1653.1743949952142,
+      "mesh20mBilinearM": 1653.2389602606631,
+      "mesh20mTriangleM": 1653.2385940195666,
+      "renderedElevationM": 1653.2385746489745,
+      "renderedMinusNativeM": 0.06417965376022039,
+      "renderedMinusSourceTriangleM": -1.937059209922154e-05
+    },
+    {
+      "lat": -89.53230669527828,
+      "lon": 205.19104078195969,
+      "x": -6036.440709708656,
+      "y": -12833.297881254108,
+      "native5mBilinearM": 1517.3677585808273,
+      "mesh20mBilinearM": 1517.3829091109772,
+      "mesh20mTriangleM": 1517.3717532467424,
+      "renderedElevationM": 1517.3717117086053,
+      "renderedMinusNativeM": 0.003953127778004273,
+      "renderedMinusSourceTriangleM": -4.153813711127441e-05
+    },
+    {
+      "lat": -89.50438413060205,
+      "lon": 212.65887589878173,
+      "x": -8110.099098030847,
+      "y": -12652.744582412743,
+      "native5mBilinearM": 1569.8373573135318,
+      "mesh20mBilinearM": 1569.8079119928475,
+      "mesh20mTriangleM": 1569.7980786220464,
+      "renderedElevationM": 1569.7980447413865,
+      "renderedMinusNativeM": -0.0393125721452634,
+      "renderedMinusSourceTriangleM": -3.388065988474409e-05
+    },
+    {
+      "lat": -89.55842864243222,
+      "lon": 209.3150201040373,
+      "x": -6555.886690044872,
+      "y": -11675.27999064313,
+      "native5mBilinearM": 1543.7062481141877,
+      "mesh20mBilinearM": 1543.6394579029989,
+      "mesh20mTriangleM": 1543.6629299333244,
+      "renderedElevationM": 1543.662880665157,
+      "renderedMinusNativeM": -0.043367449030711214,
+      "renderedMinusSourceTriangleM": -4.926816745864926e-05
+    },
+    {
+      "lat": -89.53979748206545,
+      "lon": 214.49948068683673,
+      "x": -7904.070578564308,
+      "y": -11500.717364566382,
+      "native5mBilinearM": 1653.820590819983,
+      "mesh20mBilinearM": 1654.0158666214377,
+      "mesh20mTriangleM": 1654.0070748159822,
+      "renderedElevationM": 1654.0070441416465,
+      "renderedMinusNativeM": 0.1864533216635209,
+      "renderedMinusSourceTriangleM": -3.06743356759398e-05
+    }
+  ],
+  "coordinateEntry": {
+    "lat": -89.53432,
+    "lon": 209.94767000000002,
+    "x": -7049.355538480268,
+    "y": -12235.636339553808,
+    "native5mBilinearM": 1653.1738153527297,
+    "mesh20mBilinearM": 1653.2388505128474,
+    "mesh20mTriangleM": 1653.2384811485942,
+    "displayedModelElevationM": 1653.2388505128476
+  }
+}

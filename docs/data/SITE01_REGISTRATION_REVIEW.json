@@ -1,0 +1,16 @@
+{
+  "registrationVerified": false,
+  "defaultEnabled": false,
+  "status": "unverified",
+  "mapProjectionChecks": "WMTS georeferencing, lunar radius, exact target bounds and UV orientation pass; these are not independent image-to-terrain controls.",
+  "independentLandmarkResidualM": null,
+  "independentLandmarkCount": 0,
+  "reason": "No defensible independent landmark control set established in the dark coarse WAC crop; source metadata states 12\u2013300 m absolute accuracy, and no frame correction has been measured.",
+  "disposition": "Shaded elevation is the default. Optional LROC WAC must be labeled registration unverified.",
+  "imageStatistics": {
+    "pixels": 1048576,
+    "fractionIntensityBelow8": 0.985478401184082,
+    "p95Intensity": 5.0,
+    "maximumIntensity": 101
+  }
+}

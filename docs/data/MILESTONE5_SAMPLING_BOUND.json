@@ -1,0 +1,581 @@
+{
+ "method": "Milestone 5: what does hourly sampling miss? Bounded-error statement for sunlight and Earth line of sight.",
+ "period": "2023-01-01 to 2031-12-31 (10-minute vs hourly)",
+ "terrain": "planner 240 m horizon masks",
+ "summary": {
+  "sun": {
+   "maxAbsPctDifference": 0.005915634599695796,
+   "maxDisagreementPctOfTime": 0.3183879050625156,
+   "missedRunsTotal": 13,
+   "missedLongestMinutes": 50,
+   "transitionOffsetMaxMinutes": 50.0
+  },
+  "earth": {
+   "maxAbsPctDifference": 0.010141087885195965,
+   "maxDisagreementPctOfTime": 0.13098905185053727,
+   "missedRunsTotal": 1,
+   "missedLongestMinutes": 30,
+   "transitionOffsetMaxMinutes": 50.0
+  }
+ },
+ "sites": [
+  {
+   "id": "connecting-ridge",
+   "name": "Connecting Ridge (Shackleton\u2013de Gerlache)",
+   "sun": {
+    "pctTime10min": 52.27266004960682,
+    "pctTimeHourly": 52.278575684206515,
+    "pctDifference": 0.005915634599695796,
+    "disagreementPctOfTime": 0.2907111860424827,
+    "transitions10min": 545,
+    "transitionsHourly": 545,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 4,
+      "missedRuns": 3,
+      "missedMaxMinutes": 50,
+      "missedTotalHours": 1.1666666666666667
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 2,
+      "missedRuns": 1,
+      "missedMaxMinutes": 20,
+      "missedTotalHours": 0.3333333333333333
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 50.01161999653513,
+    "pctTimeHourly": 50.01077490587803,
+    "pctDifference": -0.0008450906570978134,
+    "disagreementPctOfTime": 0.13056650652198715,
+    "transitions10min": 242,
+    "transitionsHourly": 242,
+    "transitionOffsetMinutes": {
+     "p50": 30.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "peak-near-shackleton",
+   "name": "Peak near Shackleton",
+   "sun": {
+    "pctTime10min": 43.02377662563752,
+    "pctTimeHourly": 43.02863589691584,
+    "pctDifference": 0.004859271278323529,
+    "disagreementPctOfTime": 0.3183879050625156,
+    "transitions10min": 621,
+    "transitionsHourly": 621,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 4,
+      "missedRuns": 2,
+      "missedMaxMinutes": 10,
+      "missedTotalHours": 0.3333333333333333
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 9,
+      "missedRuns": 6,
+      "missedMaxMinutes": 40,
+      "missedTotalHours": 2.3333333333333335
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 57.93962672345676,
+    "pctTimeHourly": 57.94871144802058,
+    "pctDifference": 0.009084724563823698,
+    "disagreementPctOfTime": 0.12655232590076101,
+    "transitions10min": 241,
+    "transitionsHourly": 241,
+    "transitionOffsetMinutes": {
+     "p50": 30.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "nobile-rim-2",
+   "name": "Nobile Rim 2 (optimal point)",
+   "sun": {
+    "pctTime10min": 29.264221819395676,
+    "pctTimeHourly": 29.262109092752926,
+    "pctDifference": -0.0021127266427500846,
+    "disagreementPctOfTime": 0.11239705739433196,
+    "transitions10min": 223,
+    "transitionsHourly": 223,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 30.764046463084327,
+    "pctTimeHourly": 30.773131187648158,
+    "pctDifference": 0.00908472456382925,
+    "disagreementPctOfTime": 0.12655232590076101,
+    "transitions10min": 242,
+    "transitionsHourly": 242,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "mons-mouton",
+   "name": "Mons Mouton (summit plateau)",
+   "sun": {
+    "pctTime10min": 30.25234407021013,
+    "pctTimeHourly": 30.25086516156021,
+    "pctDifference": -0.0014789086499211734,
+    "disagreementPctOfTime": 0.16500395079882194,
+    "transitions10min": 309,
+    "transitionsHourly": 309,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 60.3772907238624,
+    "pctTimeHourly": 60.37496672455538,
+    "pctDifference": -0.002323999307018987,
+    "disagreementPctOfTime": 0.12697487122931111,
+    "transitions10min": 241,
+    "transitionsHourly": 241,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "shackleton-floor",
+   "name": "Shackleton crater floor (permanent shadow)",
+   "sun": {
+    "pctTime10min": 0.0,
+    "pctTimeHourly": 0.0,
+    "pctDifference": 0.0,
+    "disagreementPctOfTime": 0.0,
+    "transitions10min": 0,
+    "transitionsHourly": 0,
+    "transitionOffsetMinutes": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 0.0,
+    "pctTimeHourly": 0.0,
+    "pctDifference": 0.0,
+    "disagreementPctOfTime": 0.0,
+    "transitions10min": 0,
+    "transitionsHourly": 0,
+    "transitionOffsetMinutes": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "shackleton-rim-site04",
+   "name": "Shackleton Rim (PGDA Site04 DEM centre)",
+   "sun": {
+    "pctTime10min": 13.55208504992373,
+    "pctTimeHourly": 13.557366866530607,
+    "pctDifference": 0.0052818166068752115,
+    "disagreementPctOfTime": 0.09655160757370246,
+    "transitions10min": 181,
+    "transitionsHourly": 181,
+    "transitionOffsetMinutes": {
+     "p50": 30.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 1,
+      "missedRuns": 1,
+      "missedMaxMinutes": 20,
+      "missedTotalHours": 0.3333333333333333
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 1,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 16.810965896366532,
+    "pctTimeHourly": 16.813923713666384,
+    "pctDifference": 0.0029578172998506735,
+    "disagreementPctOfTime": 0.09549524425232717,
+    "transitions10min": 188,
+    "transitionsHourly": 188,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "nobile-rim-1-site06",
+   "name": "Nobile Rim 1 (PGDA Site06 DEM centre)",
+   "sun": {
+    "pctTime10min": 32.42422705895775,
+    "pctTimeHourly": 32.42866378490753,
+    "pctDifference": 0.0044367259497746225,
+    "disagreementPctOfTime": 0.19542721445443062,
+    "transitions10min": 367,
+    "transitionsHourly": 367,
+    "transitionOffsetMinutes": {
+     "p50": 30.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 39.64954090450053,
+    "pctTimeHourly": 39.65545653910023,
+    "pctDifference": 0.005915634599701347,
+    "disagreementPctOfTime": 0.13098905185053727,
+    "transitions10min": 242,
+    "transitionsHourly": 242,
+    "transitionOffsetMinutes": {
+     "p50": 30.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "im-2",
+   "name": "IM-2 Athena (Intuitive Machines)",
+   "sun": {
+    "pctTime10min": 47.44571348891453,
+    "pctTimeHourly": 47.4501502148643,
+    "pctDifference": 0.0044367259497746225,
+    "disagreementPctOfTime": 0.14472177502841618,
+    "transitions10min": 278,
+    "transitionsHourly": 278,
+    "transitionOffsetMinutes": {
+     "p50": 30.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 92.94940864781269,
+    "pctTimeHourly": 92.9392675599275,
+    "pctDifference": -0.010141087885195965,
+    "disagreementPctOfTime": 0.10183342418057896,
+    "transitions10min": 195,
+    "transitionsHourly": 195,
+    "transitionOffsetMinutes": {
+     "p50": 20.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 1,
+      "missedRuns": 1,
+      "missedMaxMinutes": 30,
+      "missedTotalHours": 0.5
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  },
+  {
+   "id": "im-1",
+   "name": "IM-1 Odysseus, Malapert A",
+   "sun": {
+    "pctTime10min": 37.79942618344383,
+    "pctTimeHourly": 37.797102184136804,
+    "pctDifference": -0.002323999307024538,
+    "disagreementPctOfTime": 0.12190432728670969,
+    "transitions10min": 223,
+    "transitionsHourly": 223,
+    "transitionOffsetMinutes": {
+     "p50": 30.0,
+     "p95": 50.0,
+     "max": 50.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   },
+   "earth": {
+    "pctTime10min": 100.0,
+    "pctTimeHourly": 100.0,
+    "pctDifference": 0.0,
+    "disagreementPctOfTime": 0.0,
+    "transitions10min": 0,
+    "transitionsHourly": 0,
+    "transitionOffsetMinutes": {
+     "p50": 0.0,
+     "p95": 0.0,
+     "max": 0.0
+    },
+    "missed": [
+     {
+      "state": "visible",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     },
+     {
+      "state": "hidden",
+      "runsShorterThan1h": 0,
+      "missedRuns": 0,
+      "missedMaxMinutes": 0,
+      "missedTotalHours": 0.0
+     }
+    ]
+   }
+  }
+ ]
+}

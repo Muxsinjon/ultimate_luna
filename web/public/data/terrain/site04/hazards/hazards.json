@@ -1,0 +1,119 @@
+{
+  "version": 1,
+  "width": 1601,
+  "height": 1601,
+  "x0": -4997.5,
+  "y0": -3002.5,
+  "dx": 5,
+  "dy": -5,
+  "sourceSha256": "38ff70dbdf2f066c2cfa94a646c3a59d653ce7f6b4528b15fc1b43ee397ce758",
+  "slopeSupportM": 15,
+  "roughnessSupportM": 25,
+  "quantum": 0.001,
+  "noData": 65535,
+  "method": "3x3 OLS plane slope; 5x5 OLS detrended radial-height RMS; complete native 5 m neighbourhoods; slope uses stereographic/elevation scale correction",
+  "assets": {
+    "slope": {
+      "file": "slope.u16",
+      "sha256": "358f84461ef632f26a0d3d7a3347d05c63f0e5ce34b1cb7e432087c68bebc7d3",
+      "units": "degrees",
+      "min": 0.03920160666701492,
+      "max": 60.912578801898945
+    },
+    "roughness": {
+      "file": "roughness.u16",
+      "sha256": "92a7ff9ef451707e59c44dba2a0cdb579a1c178b309c42d3af8fe222c5b64b16",
+      "units": "m",
+      "min": 0.0015989463640899918,
+      "max": 4.697691573937998
+    }
+  },
+  "points": [
+    {
+      "row": 0,
+      "col": 0,
+      "slope": 21.145375001279405,
+      "roughness": 0.28173232913089125
+    },
+    {
+      "row": 100,
+      "col": 200,
+      "slope": 21.562053646884735,
+      "roughness": 0.05910169322744987
+    },
+    {
+      "row": 800,
+      "col": 800,
+      "slope": 32.86393590474999,
+      "roughness": 0.18893415330764166
+    },
+    {
+      "row": 1600,
+      "col": 1600,
+      "slope": 34.21734378829898,
+      "roughness": 0.15396224210012546
+    },
+    {
+      "row": 913,
+      "col": 1101,
+      "slope": 33.69122484860451,
+      "roughness": 0.11694334317247418
+    }
+  ],
+  "officialComparison": {
+    "metadata": {
+      "width": 3200,
+      "height": 3200,
+      "dtype": "float32",
+      "resolutionM": [
+        5.0,
+        5.0
+      ],
+      "boundsM": [
+        -9000.0,
+        -15000.0,
+        7000.0,
+        1000.0
+      ],
+      "transform": [
+        5.0,
+        0.0,
+        -9000.0,
+        0.0,
+        -5.0,
+        1000.0
+      ],
+      "crsWkt": "PROJCS[\"unnamed\",GEOGCS[\"unnamed ellipse\",DATUM[\"unknown\",SPHEROID[\"unnamed\",1737400,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-90],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",NORTH],AXIS[\"Northing\",NORTH]]",
+      "noData": "NaN",
+      "unitsMetadata": [
+        null
+      ],
+      "scales": [
+        1.0
+      ],
+      "offsets": [
+        0.0
+      ],
+      "tags": {
+        "NC_GLOBAL#Conventions": "COARDS, CF-1.5",
+        "NC_GLOBAL#GMT_version": "5.4.5 [64-bit]",
+        "NC_GLOBAL#history": "xyz2grd -bi3 -I5 -R-9.00000000000e+03/7.00000000000e+03/-1.50000000000e+04/1.00000000000e+03 -Gtest.grd -r",
+        "NC_GLOBAL#node_offset": "1",
+        "x#actual_range": "{-9000,7000}",
+        "x#long_name": "x",
+        "y#actual_range": "{-15000,1000}",
+        "y#long_name": "y",
+        "z#actual_range": "{0,69.64722442626953}",
+        "z#long_name": "z",
+        "z#_FillValue": "nan",
+        "AREA_OR_POINT": "Area"
+      }
+    },
+    "url": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site04/Site04_final_adj_5mpp_slp.tif",
+    "sha256": "ec3cfa184b114d95aff498e7452764a8569737ae829e7ff3efd38d5187182579",
+    "rmsDifferenceDeg": 0.6456743007352945,
+    "maxAbsDifferenceDeg": 24.454914536583587,
+    "note": "Different slope estimators/support may differ; official product is a comparison, not substituted ground truth."
+  },
+  "independentMaxDifference": 2.8430410248247995e-09
+}

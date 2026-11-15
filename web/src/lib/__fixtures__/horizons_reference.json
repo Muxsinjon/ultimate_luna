@@ -1,0 +1,167 @@
+{
+  "retrieved": "2026-11-14",
+  "rows": [
+    {
+      "site": "IM-2 Athena",
+      "lon": 29.1958,
+      "lat": -84.7906,
+      "utc": "2026-11-14T12:00:00Z",
+      "horizons": {
+        "sunAz": 91.463789,
+        "sunEl": 1.429623,
+        "earthAz": 328.958499,
+        "earthEl": 0.340348
+      },
+      "ours": {
+        "sunAz": 91.464,
+        "sunEl": 1.4303,
+        "earthAz": 328.9618,
+        "earthEl": 0.3408
+      }
+    },
+    {
+      "site": "IM-2 Athena",
+      "lon": 29.1958,
+      "lat": -84.7906,
+      "utc": "2027-03-01T00:00:00Z",
+      "horizons": {
+        "sunAz": 236.468993,
+        "sunEl": -3.454692,
+        "earthAz": 335.00511,
+        "earthEl": -1.533035
+      },
+      "ours": {
+        "sunAz": 236.4692,
+        "sunEl": -3.454,
+        "earthAz": 335.0063,
+        "earthEl": -1.5335
+      }
+    },
+    {
+      "site": "IM-2 Athena",
+      "lon": 29.1958,
+      "lat": -84.7906,
+      "utc": "2028-07-15T06:00:00Z",
+      "horizons": {
+        "sunAz": 231.739388,
+        "sunEl": -3.232997,
+        "earthAz": 325.259426,
+        "earthEl": 10.885544
+      },
+      "ours": {
+        "sunAz": 231.7396,
+        "sunEl": -3.2323,
+        "earthAz": 325.26,
+        "earthEl": 10.8861
+      }
+    },
+    {
+      "site": "Chandrayaan-3",
+      "lon": 32.319,
+      "lat": -69.373,
+      "utc": "2026-11-14T12:00:00Z",
+      "horizons": {
+        "sunAz": 88.868384,
+        "sunEl": 2.089182,
+        "earthAz": 324.795979,
+        "earthEl": 12.897788
+      },
+      "ours": {
+        "sunAz": 88.8686,
+        "sunEl": 2.0898,
+        "earthAz": 324.7993,
+        "earthEl": 12.8988
+      }
+    },
+    {
+      "site": "Chandrayaan-3",
+      "lon": 32.319,
+      "lat": -69.373,
+      "utc": "2027-03-01T00:00:00Z",
+      "horizons": {
+        "sunAz": 235.164511,
+        "sunEl": -12.730041,
+        "earthAz": 331.205578,
+        "earthEl": 11.920349
+      },
+      "ours": {
+        "sunAz": 235.1647,
+        "sunEl": -12.7293,
+        "earthAz": 331.2068,
+        "earthEl": 11.9201
+      }
+    },
+    {
+      "site": "Chandrayaan-3",
+      "lon": 32.319,
+      "lat": -69.373,
+      "utc": "2028-07-15T06:00:00Z",
+      "horizons": {
+        "sunAz": 230.375967,
+        "sunEl": -13.500452,
+        "earthAz": 319.106321,
+        "earthEl": 22.680099
+      },
+      "ours": {
+        "sunAz": 230.3762,
+        "sunEl": -13.4998,
+        "earthAz": 319.1068,
+        "earthEl": 22.6807
+      }
+    },
+    {
+      "site": "Apollo 11",
+      "lon": 23.47298,
+      "lat": 0.67409,
+      "utc": "2026-11-14T12:00:00Z",
+      "horizons": {
+        "sunAz": 91.485722,
+        "sunEl": -7.066727,
+        "earthAz": 277.587368,
+        "earthEl": 64.319984
+      },
+      "ours": {
+        "sunAz": 91.4857,
+        "sunEl": -7.0662,
+        "earthAz": 277.5875,
+        "earthEl": 64.3234
+      }
+    },
+    {
+      "site": "Apollo 11",
+      "lon": 23.47298,
+      "lat": 0.67409,
+      "utc": "2027-03-01T00:00:00Z",
+      "horizons": {
+        "sunAz": 271.002177,
+        "sunEl": -27.95009,
+        "earthAz": 285.806065,
+        "earthEl": 69.82212
+      },
+      "ours": {
+        "sunAz": 271.0022,
+        "sunEl": -27.9493,
+        "earthAz": 285.8082,
+        "earthEl": 69.8231
+      }
+    },
+    {
+      "site": "Apollo 11",
+      "lon": 23.47298,
+      "lat": 0.67409,
+      "utc": "2028-07-15T06:00:00Z",
+      "horizons": {
+        "sunAz": 270.433135,
+        "sunEl": -32.651223,
+        "earthAz": 254.758482,
+        "earthEl": 60.415075
+      },
+      "ours": {
+        "sunAz": 270.4331,
+        "sunEl": -32.6505,
+        "earthAz": 254.7572,
+        "earthEl": 60.4155
+      }
+    }
+  ]
+}

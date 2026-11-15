@@ -1,0 +1,157 @@
+{
+  "period": "2026-11-01 to 2026-12-01 every 6h",
+  "sites": [
+    {
+      "site": "Near south pole (89.5S, 0E)",
+      "sun": {
+        "maxElevErrDeg": 0.0007,
+        "rmsElevErrDeg": 0.0007,
+        "maxAzErrDeg": 0.0002,
+        "samples": 121
+      },
+      "earth": {
+        "maxElevErrDeg": 0.0004,
+        "rmsElevErrDeg": 0.0002,
+        "maxAzErrDeg": 0.006,
+        "samples": 121
+      }
+    },
+    {
+      "site": "Mons Mouton area (84.5S, 30E)",
+      "sun": {
+        "maxElevErrDeg": 0.0007,
+        "rmsElevErrDeg": 0.0007,
+        "maxAzErrDeg": 0.0002,
+        "samples": 121
+      },
+      "earth": {
+        "maxElevErrDeg": 0.0006,
+        "rmsElevErrDeg": 0.0003,
+        "maxAzErrDeg": 0.0059,
+        "samples": 121
+      }
+    },
+    {
+      "site": "Chandrayaan-3 (69.37S, 32.32E)",
+      "sun": {
+        "maxElevErrDeg": 0.0007,
+        "rmsElevErrDeg": 0.0007,
+        "maxAzErrDeg": 0.0002,
+        "samples": 121
+      },
+      "earth": {
+        "maxElevErrDeg": 0.0014,
+        "rmsElevErrDeg": 0.0008,
+        "maxAzErrDeg": 0.006,
+        "samples": 121
+      }
+    },
+    {
+      "site": "Apollo 11 (0.67N, 23.47E)",
+      "sun": {
+        "maxElevErrDeg": 0.0008,
+        "rmsElevErrDeg": 0.0005,
+        "maxAzErrDeg": 0.0001,
+        "samples": 121
+      },
+      "earth": {
+        "maxElevErrDeg": 0.0057,
+        "rmsElevErrDeg": 0.0039,
+        "maxAzErrDeg": 0.0051,
+        "samples": 121
+      }
+    },
+    {
+      "site": "Far side (45S, 177.6E)",
+      "sun": {
+        "maxElevErrDeg": 0.0008,
+        "rmsElevErrDeg": 0.0006,
+        "maxAzErrDeg": 0.0003,
+        "samples": 121
+      },
+      "earth": {
+        "maxElevErrDeg": 0.0007,
+        "rmsElevErrDeg": 0.0004,
+        "maxAzErrDeg": 0.0094,
+        "samples": 121
+      }
+    }
+  ],
+  "worstElevationErrorDeg": 0.0057,
+  "illumination": {
+    "reference": "LOLA average visibility maps, Mazarico et al. (2011) Icarus 211, PGDA 75S 120 m (2016)",
+    "note": "ours: 2023-2031 hourly, 240 m horizon masks, 2 m observer; PGDA: 18.6-yr average at 120 m",
+    "sites": [
+      {
+        "site": "Connecting Ridge (Shackleton\u2013de Gerlache)",
+        "oursSunPct": 46.7,
+        "pgdaSunPct": 53.3,
+        "oursEarthPct": 50.0,
+        "pgdaEarthPct": 53.4
+      },
+      {
+        "site": "Peak near Shackleton",
+        "oursSunPct": 36.1,
+        "pgdaSunPct": 37.6,
+        "oursEarthPct": 57.9,
+        "pgdaEarthPct": 53.4
+      },
+      {
+        "site": "Nobile Rim 2 (optimal point)",
+        "oursSunPct": 27.8,
+        "pgdaSunPct": 33.8,
+        "oursEarthPct": 30.8,
+        "pgdaEarthPct": 33.3
+      },
+      {
+        "site": "Mons Mouton (summit plateau)",
+        "oursSunPct": 27.2,
+        "pgdaSunPct": 33.9,
+        "oursEarthPct": 60.4,
+        "pgdaEarthPct": 62.1
+      },
+      {
+        "site": "Shackleton crater floor (permanent shadow)",
+        "oursSunPct": 0.0,
+        "pgdaSunPct": 0.0,
+        "oursEarthPct": 0.0,
+        "pgdaEarthPct": 0.0
+      },
+      {
+        "site": "IM-2 Athena (Intuitive Machines)",
+        "oursSunPct": 45.7,
+        "pgdaSunPct": 46.8,
+        "oursEarthPct": 92.9,
+        "pgdaEarthPct": 93.1
+      },
+      {
+        "site": "IM-1 Odysseus, Malapert A",
+        "oursSunPct": 37.2,
+        "pgdaSunPct": 35.6,
+        "oursEarthPct": 100.0,
+        "pgdaEarthPct": 100.0
+      }
+    ]
+  },
+  "missions": [
+    {
+      "mission": "Chandrayaan-3 (ISRO), 69.373 S 32.319 E",
+      "predicted": [
+        {
+          "event": "sunrise",
+          "utc": "2023-08-21T11:20Z"
+        },
+        {
+          "event": "sunset",
+          "utc": "2023-09-04T09:00Z"
+        },
+        {
+          "event": "sunrise",
+          "utc": "2023-09-19T20:10Z"
+        }
+      ],
+      "sunAtLandingDeg": 8.62,
+      "record": "Landed 2023-08-23 12:34 UTC; Vikram put to sleep ~2023-09-04 02:30 UTC ahead of local sunset (reported ~Sep 4-5); wake-up attempted from the next sunrise, announced as Sep 22."
+    }
+  ]
+}

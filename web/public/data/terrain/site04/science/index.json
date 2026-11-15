@@ -1,0 +1,184 @@
+{
+ "version": 1,
+ "siteId": "site04",
+ "generated": "2026-11-15T00:34:15+00:00",
+ "layers": [
+  {
+   "kind": "model",
+   "width": 101,
+   "height": 101,
+   "stride": 4,
+   "offset": 0,
+   "noData": 65535,
+   "resolutionM": 500,
+   "period": "Thermal-model fits to Diviner observations from the first mapping year (2009\u20132010)",
+   "source": {
+    "title": "LRO Diviner Polar Resource Products (LRO-L-DLRE-5-PRP-V2.0)",
+    "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.tab",
+    "label": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.xml",
+    "citation": "Paige et al. (2010), Science 330; Paige et al., LRO DLRE Level 5 PRP V2.0, NASA PDS (2018)",
+    "sha256": "393deaa5d8925d45bb2ed608f937a824f5eae029c2558aad1d2da8206b83a62d",
+    "bytes": 604800210
+   },
+   "caveats": [
+    "Model-derived from a thermal model fitted to the first mapping year; not a direct measurement or a forecast for a mission date.",
+    "Triangular facets of about 0.5 km on a Kaguya-derived polar DEM; registration to the LOLA 5 m terrain is not independently verified.",
+    "Values are uniform within each facet: they do not resolve the 20 m mesh."
+   ],
+   "id": "diviner-tmax",
+   "title": "Diviner annual maximum surface temperature (model)",
+   "quantity": "temperature",
+   "unit": "K",
+   "scale": 0.01,
+   "file": "diviner-tmax.u16",
+   "sha256": "1e2f981557d9ab00958fadcf1c1fd1409fa513fbce3a08549a444d61b02cf9fb",
+   "validPct": 100.0,
+   "min": 72.819,
+   "max": 340.656,
+   "legend": {
+    "min": 40,
+    "max": 320,
+    "palette": "thermal"
+   }
+  },
+  {
+   "kind": "model",
+   "width": 101,
+   "height": 101,
+   "stride": 4,
+   "offset": 0,
+   "noData": 65535,
+   "resolutionM": 500,
+   "period": "Thermal-model fits to Diviner observations from the first mapping year (2009\u20132010)",
+   "source": {
+    "title": "LRO Diviner Polar Resource Products (LRO-L-DLRE-5-PRP-V2.0)",
+    "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.tab",
+    "label": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.xml",
+    "citation": "Paige et al. (2010), Science 330; Paige et al., LRO DLRE Level 5 PRP V2.0, NASA PDS (2018)",
+    "sha256": "393deaa5d8925d45bb2ed608f937a824f5eae029c2558aad1d2da8206b83a62d",
+    "bytes": 604800210
+   },
+   "caveats": [
+    "Model-derived from a thermal model fitted to the first mapping year; not a direct measurement or a forecast for a mission date.",
+    "Triangular facets of about 0.5 km on a Kaguya-derived polar DEM; registration to the LOLA 5 m terrain is not independently verified.",
+    "Values are uniform within each facet: they do not resolve the 20 m mesh."
+   ],
+   "id": "diviner-tavg",
+   "title": "Diviner annual average temperature at 2 cm depth (model)",
+   "quantity": "temperature",
+   "unit": "K",
+   "scale": 0.01,
+   "file": "diviner-tavg.u16",
+   "sha256": "4a40352118de8c3a5ef79620f400e4e16961688fe9f6727eff7e58f62de37084",
+   "validPct": 100.0,
+   "min": 48.178,
+   "max": 173.721,
+   "legend": {
+    "min": 40,
+    "max": 320,
+    "palette": "thermal"
+   }
+  },
+  {
+   "kind": "model",
+   "width": 101,
+   "height": 101,
+   "stride": 4,
+   "offset": 0,
+   "noData": 65535,
+   "resolutionM": 500,
+   "period": "Thermal-model fits to Diviner observations from the first mapping year (2009\u20132010)",
+   "source": {
+    "title": "LRO Diviner Polar Resource Products (LRO-L-DLRE-5-PRP-V2.0)",
+    "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.tab",
+    "label": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.xml",
+    "citation": "Paige et al. (2010), Science 330; Paige et al., LRO DLRE Level 5 PRP V2.0, NASA PDS (2018)",
+    "sha256": "393deaa5d8925d45bb2ed608f937a824f5eae029c2558aad1d2da8206b83a62d",
+    "bytes": 604800210
+   },
+   "caveats": [
+    "Model-derived from a thermal model fitted to the first mapping year; not a direct measurement or a forecast for a mission date.",
+    "Triangular facets of about 0.5 km on a Kaguya-derived polar DEM; registration to the LOLA 5 m terrain is not independently verified.",
+    "Values are uniform within each facet: they do not resolve the 20 m mesh.",
+    "Indicates where water ice WOULD be thermally stable if present; it is not evidence that ice is there."
+   ],
+   "id": "diviner-ice",
+   "title": "Diviner depth to stable water ice (model)",
+   "quantity": "depth",
+   "unit": "m",
+   "scale": 0.001,
+   "file": "diviner-ice.u16",
+   "sha256": "da0b82c17f4ee6c2bce7a9af685620a56510d97ae0fc467c0fb84ef72942d3bf",
+   "validPct": 27.23262425252426,
+   "min": 0.0,
+   "max": 1.29353,
+   "legend": {
+    "min": 0,
+    "max": 2.8738,
+    "palette": "ice"
+   },
+   "specials": [
+    {
+     "value": 65534,
+     "label": "No stable ice within 2.87 m of the surface (model)",
+     "pct": 40.476423880011765
+    },
+    {
+     "value": 65533,
+     "label": "Source code -1 (not defined in the PDS label; not interpreted)",
+     "pct": 32.290951867463974
+    }
+   ]
+  },
+  {
+   "id": "shadowcam-if",
+   "title": "ShadowCam controlled mosaic, Shackleton (observed I/F)",
+   "kind": "observation",
+   "quantity": "reflectance",
+   "unit": "I/F",
+   "scale": 2e-05,
+   "offset": 0,
+   "noData": 65535,
+   "width": 401,
+   "height": 401,
+   "stride": 1,
+   "file": "shadowcam-if.u16",
+   "sha256": "672f22beb4181fa82f8645ef2ca8dbc660eb519271ff08e4eaf1569d7334e220",
+   "validPct": 65.77819789677925,
+   "min": 0.02079106494784355,
+   "max": 0.8127477169036865,
+   "resolutionM": 20,
+   "period": "KPLO ShadowCam observations, mosaic group \"summer 11am\" (PDS release 2025-07-30)",
+   "legend": {
+    "min": 0,
+    "max": 0.5328361213207209,
+    "palette": "gray"
+   },
+   "source": {
+    "title": "KPLO ShadowCam controlled mosaic shackleton01 (20 m COG)",
+    "url": "https://pds.shadowcam.im-ldi.com/derived/cmosaic/shackleton01/shadowcam_cmosaic_shackleton01_p896s1350_summer_11am_20m_cog.tif",
+    "label": "https://pds.shadowcam.im-ldi.com/derived/cmosaic/shackleton01/shadowcam_cmosaic_shackleton01_p896s1350_summer_11am_20m_cog.xml",
+    "citation": "ShadowCam team (Arizona State University / KARI / NASA), PDS ShadowCam archive",
+    "crs": "+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +x_0=0 +y_0=0 +R=1737400 +units=m +no_defs=True",
+    "resolutionM": [
+     20.0,
+     20.0
+    ],
+    "window": [
+     0,
+     332,
+     336,
+     404
+    ],
+    "windowSha256": "2854607edea99c351a602fe50ab7199c784de815e8d5e86c13d743163a8d7e41"
+   },
+   "caveats": [
+    "Observed image of terrain lit only by light scattered from nearby sunlit slopes; brightness is not albedo.",
+    "Covers only part of this crop (the Shackleton interior); no image exists elsewhere and none is substituted.",
+    "ShadowCam is designed for permanently shadowed terrain; outside the shadow, sunlit pixels may be saturated or sparse, so only the shadowed interior is meaningful.",
+    "Mosaic is controlled by the ShadowCam team; registration to this LOLA 5 m mesh is not independently verified here."
+   ]
+  }
+ ],
+ "notChecked": "LEND, Mini-RF, M3 and CRaTER are not integrated; see docs/MILESTONE8_ACCEPTANCE.md"
+}

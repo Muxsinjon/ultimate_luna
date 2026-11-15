@@ -1,0 +1,11 @@
+# Add a real NASA Site01 3D terrain explorer
+
+Local PR description only. Do not push, create a GitHub PR or merge until the user explicitly authorizes it.
+
+LunaWindow previously showed terrain-aware horizons but no surface mesh. This adds a separate Three.js terrain workspace using NASA PGDA Connecting Ridge Site01's actual 5 m LOLA DEM and RMS uncertainty raster. A bounded 20 m mesh supports orbit, zoom, pan, ray selection and lunar coordinate/elevation/RMS readouts. Picked locations connect to the existing Site A/B planner without changing ephemeris or regional horizon calculations.
+
+The reproducible Python processor verifies source GeoTIFF metadata and pinned observed hashes, preserves pixel-centre georeferencing, and exports ~1.37 MB of browser assets. An optional real LROC WAC context texture is projected from NASA Moon Trek tiles onto the exact mesh extent; its coarser resolution, baked-in shadows and unmeasured independent co-registration are explicit. The original planner, comparison and 360° Surface View remain available.
+
+Validation: 69 unit tests, six real-source Python tests with no skips, lint, formatting and production build pass. The new browser suite verifies rendered camera changes, ray picking, LROC texture decoding, coordinate/RMS readouts, planner integration, coverage, mobile layout and checksum recovery. All ten existing browser workflows and the zero-console gate now pass. The baseline font-certificate failure is resolved by self-hosting the same licensed Barlow font faces, without changing TLS trust. Independent native-source reference tests and five actual browser picks validate selected-point readings. WAC registration remains unverified, off by default, and explicitly labeled. See `docs/MILESTONE1_ACCEPTANCE.md` for final acceptance evidence. Three.js adds ~144 kB gzip only to the terrain workspace.
+
+Limits: 20 m mesh decimation versus native 5 m DEM has 0.2526 m RMS/8.1865 m maximum residual for this crop; source uncertainty is separate. WAC is context imagery, not independently validated NAC precision mapping. Existing custom-site horizons use the original 960 m regional terrain. See `docs/PROJECT_STATUS.md` and `docs/TERRAIN_3D.md` for evidence and reproducibility.

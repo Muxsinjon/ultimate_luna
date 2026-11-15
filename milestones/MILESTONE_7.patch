@@ -1,0 +1,1768 @@
+From 1f2c6a9ccc39b0a3b058a11dd8c4810d11b78594 Mon Sep 17 00:00:00 2001
+From: Muxsinjon <Muxsinjon@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 02:13:29 +0500
+Subject: [PATCH] Milestone 7: immersive first-person surface view (desktop
+ first, optional WebXR)
+
+- Kept the 360-degree horizon panorama as default and coverage fallback
+- 3D first-person mode on the processed 5 m sites: verified 20 m mesh,
+  local ENU camera at a labelled eye height, Milestone 4 Sun/Earth at true
+  angular sizes (Earth phase from lighting), Milestone 5 computed shadows,
+  LOLA 240 m far-terrain silhouette, black sky
+- Controls: drag/keys look, walking on terrain, FOV, eye height, look at
+  Sun/Earth/north, compass, time slider; overlays: sunlight, hazard spots,
+  horizon profile, az/el and computed visibility
+- WebXR offered only when supported (look-around only)
+- Tests: firstPerson geometry vs Milestone 4 (1e-6 deg), horizon vs planner
+  mask, pixel-probe occultation e2e, no-XR, fallback, error, mobile
+- Docs: MILESTONE7_ACCEPTANCE.md, PROJECT_STATUS, DATA_SOURCES, AI_USAGE,
+  README
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ README.md                                 |  11 +-
+ docs/AI_USAGE.md                          |   2 +
+ docs/DATA_SOURCES.md                      |  11 +
+ docs/MILESTONE7_ACCEPTANCE.md             | 111 +++++++
+ docs/PROJECT_STATUS.md                    |  19 +-
+ milestones/README.md                      |   3 +-
+ tests/e2e/surface3d_test.py               | 109 +++++++
+ web/src/components/FirstPersonView.tsx    | 325 ++++++++++++++++++++
+ web/src/components/SurfaceFirstPerson.tsx | 295 ++++++++++++++++++
+ web/src/lib/firstPerson.test.ts           | 131 ++++++++
+ web/src/lib/firstPerson.ts                | 102 ++++++
+ web/src/lib/state.test.ts                 |   1 +
+ web/src/lib/state.ts                      |   5 +
+ web/src/styles/workspaces.css             |  46 +++
+ web/src/workspaces/SurfaceView.tsx        | 358 +++++++++++++---------
+ web/src/workspaces/TerrainExplorer.tsx    |   3 +
+ 16 files changed, 1375 insertions(+), 157 deletions(-)
+ create mode 100644 docs/MILESTONE7_ACCEPTANCE.md
+ create mode 100644 tests/e2e/surface3d_test.py
+ create mode 100644 web/src/components/FirstPersonView.tsx
+ create mode 100644 web/src/components/SurfaceFirstPerson.tsx
+ create mode 100644 web/src/lib/firstPerson.test.ts
+ create mode 100644 web/src/lib/firstPerson.ts
+
+diff --git a/README.md b/README.md
+index ad0e376..c2a087d 100644
+--- a/README.md
++++ b/README.md
+@@ -188,10 +188,19 @@ On the 5 m terrain sites, **3D Terrain** can show where the Sun and Earth are vi
+ 
+ The **Mission Window Finder** separates hard requirements (sunlight, Earth visibility, darkness, blackout and, on the 5 m sites, a terrain footprint) from soft preferences (weights). Every ranked window shows its score breakdown. Sites without processed terrain are marked insufficient data rather than passing. The search and its results download as a reproducible JSON scenario. See the [acceptance report](docs/MILESTONE6_ACCEPTANCE.md).
+ 
++## Immersive surface view (Milestone 7)
++
++At Connecting Ridge, Shackleton Rim and Nobile Rim 1, **Surface View → 3D first person** puts you on NASA's 5 m terrain at the selected time:
++- The Sun and Earth sit at their calculated bearings and true sizes, with Earth's phase.
++- The sky is black, and shadows come from the horizon calculation.
++- You can walk, look at the Sun or Earth, and see the horizon profile.
++
++Other sites keep the 360° horizon panorama. VR is offered only where the browser supports it. See the [acceptance report](docs/MILESTONE7_ACCEPTANCE.md).
++
+ ## Development repository and milestone recovery
+ 
+ The complete current development project is now maintained in [Muxsinjon/new_luna](https://github.com/Muxsinjon/new_luna). The original `Muxsinjon/lunawindow` repository is retained unchanged. All application source, scientific assets, tests and pipeline scripts are at this repository's root; this is not just an archive repository.
+ 
+-Milestones 1–6 have [separate recovery files](milestones/README.md) and separate acceptance reports in `docs/`. The historical Milestone 1 backup ZIP and its checksum remain at the root; its old README is preserved in `docs/archive/NEW_LUNA_BACKUP_README.md`.
++Milestones 1–7 have [separate recovery files](milestones/README.md) and separate acceptance reports in `docs/`. The historical Milestone 1 backup ZIP and its checksum remain at the root; its old README is preserved in `docs/archive/NEW_LUNA_BACKUP_README.md`.
+ 
+ See [migration and development setup](docs/NEW_LUNA_MIGRATION.md) for audited contents and future Codex/Claude sessions. GitHub Pages deployment is manual-only; normal pushes do not deploy the site.
+diff --git a/docs/AI_USAGE.md b/docs/AI_USAGE.md
+index 968b46b..b162c7f 100644
+--- a/docs/AI_USAGE.md
++++ b/docs/AI_USAGE.md
+@@ -53,3 +53,5 @@ This log supports the Space Apps "Use of Super Intelligence (SI)" disclosure.
+ | 2026-11-15 | Milestone 5 terrain-aware sunlight and Earth line of sight: audited the existing horizon masks and visibility models; added time-dependent shadow and Earth line-of-sight layers on the 3D terrain sites (far-field horizon grids, PGDA PSR sampling), independent native 5 m reference, PGDA AVGVISIB/PSR comparison, hourly-sampling bound, full/partial/disc-weighted sunlight metrics, UI disclaimers, tests and docs. | `pipeline/{illumination_sites,sampling_bound,test_illumination_sites}.py`, `web/public/data/terrain/*/illumination/*`, `web/src/lib/{terrainShadow*,sunlight.test.ts,analysis.ts,terrainCache.ts,terrainMesh.ts}`, `web/src/lib/__fixtures__/shadow_reference.json`, `web/src/components/{LightingPanel.tsx,lightingOverlay.ts,TerrainComparePane.tsx,CompareTable.tsx,HazardPanel.tsx,About.tsx}`, `web/src/workspaces/TerrainExplorer.tsx`, `tests/e2e/{lighting_test,smoke_test}.py`, `docs/*` |
+ 
+ | 2026-11-15 | Milestone 6 Mission Window Finder audit and gaps: hard terrain requirement on processed 5 m sites (unknown terrain is insufficient), soft preference weights with a visible score and breakdown, deterministic ties, URL state, downloadable scenario, 3D terrain hand-off; unit and end-to-end tests with independent re-derivation; docs. | `web/src/lib/{finder.ts,finderRanking.test.ts,state.ts,state.test.ts,terrainCompare.ts}`, `web/src/workspaces/MissionFinder.tsx`, `tests/e2e/finder_test.py`, `docs/*` |
++
++| 2026-11-15 | Milestone 7 immersive surface view: audited the 360° panorama (kept as the fallback); added a 3D first-person mode on the 5 m sites reusing the verified mesh, Milestone 4 directions and Milestone 5 shadows, far-terrain silhouette, overlays, controls, optional WebXR; geometry unit tests, horizon comparison with the planner mask, pixel-probe occultation e2e; docs. | `web/src/lib/{firstPerson.ts,firstPerson.test.ts,state.ts,state.test.ts}`, `web/src/components/{FirstPersonView,SurfaceFirstPerson}.tsx`, `web/src/workspaces/{SurfaceView,TerrainExplorer}.tsx`, `web/src/styles/workspaces.css`, `tests/e2e/surface3d_test.py`, `docs/*` |
+diff --git a/docs/DATA_SOURCES.md b/docs/DATA_SOURCES.md
+index 509a4f8..797c2d7 100644
+--- a/docs/DATA_SOURCES.md
++++ b/docs/DATA_SOURCES.md
+@@ -2,6 +2,17 @@
+ 
+ Updated 2026-11-14. Reference directory: user-supplied `Lunar_Landing_Navigator_NASA_JPL_Data_Sources.docx` (17 categories). That document is a discovery directory, not verification. Status below distinguishes existing integration, newly verified products and future/uninspected collections. No remote publication is implied.
+ 
++## Milestone 7 immersive view records
++
++No new downloads. The first-person view reuses:
++- PGDA product 78 meshes (Milestone 1/3);
++- Milestone 5 far-field horizons and PSR inputs;
++- the Horizons ephemeris (Milestone 4).
++
++Surface imagery is deliberately not used:
++- LROC WAC registration is unverified (Milestone 1).
++- LROC NAC / QuickMap and ShadowCam products were not integrated, because no registered, licence-checked tiles for the crops exist in the repository.
++
+ ## Milestone 6 finder records
+ 
+ No new external data. The finder combines existing, attributed inputs:
+diff --git a/docs/MILESTONE7_ACCEPTANCE.md b/docs/MILESTONE7_ACCEPTANCE.md
+new file mode 100644
+index 0000000..1534734
+--- /dev/null
++++ b/docs/MILESTONE7_ACCEPTANCE.md
+@@ -0,0 +1,111 @@
++# Milestone 7: immersive surface view (desktop first, optional VR)
++
++Date: 2026-11-15. Branch `milestone-7`, based on Milestone 6 (`bdbd5cd`).
++
++## What existed and what is new
++
++| Item | Status |
++|---|---|
++| 360° horizon panorama: true-angle LOLA horizon, Sun/Earth discs, Earth phase, look-at, field of view, keyboard look, shared time bar | **Verified existing**, kept as the default and as the fallback for every site |
++| **3D first-person mode on the real 5 m terrain** (Surface View → "3D first person (5 m terrain)") | **Added** |
++| Entry points that keep location and time | **Added:** the mode switch in Surface View, "Enter first-person view" in 3D Terrain, and URL state `fp=1`. Existing entries (Finder "Open in Surface View", Explore and Compare, demo) are kept. |
++| WebXR | **Added** as progressive enhancement: shown only when `navigator.xr.isSessionSupported('immersive-vr')` is true |
++
++## How the first-person view is built (no separate simulation)
++
++**Terrain:**
++- The same verified mesh as the 3D terrain view (`meshArrays`): the NASA PGDA 5 m DEM decimated to 20 m, on the curved lunar surface in the mesh frame (X east, Y up, Z south).
++- The camera stands at a labelled eye height above the 20 m surface: 1.7 m by default, with 2 m (the planner observer), 10 m and 100 m as options.
++- The camera uses the local east/north/up at its own position. Near the pole these rotate across the 8 km crop, so this matters.
++
++**Beyond the crop:**
++- The LOLA 240 m far-field horizon from Milestone 5 is drawn as a dark silhouette ring at 40 km. Nothing beyond it is invented.
++- Sites with no 5 m coverage keep the 360° panorama, with an explicit message.
++
++**Sun and Earth:**
++- Milestone 4 directions (JPL Horizons, libration included).
++- Drawn at 100 km at their true angular sizes: Sun 0.533°, Earth from the live distance.
++- Earth is a sphere lit from the Sun direction, so its phase appears physically (the Earth–Moon parallax of about 0.15° is ignored).
++- Depth testing against the terrain and silhouette hides them where terrain blocks them.
++
++**Sky:** black, with no haze, refraction or clouds.
++
++**Shading:**
++- Lambert shading from the true Sun direction.
++- Multiplied by the Milestone 5 computed sunlit fraction every 80 m (the default "Computed sunlight and shadow" overlay). This is not a shadow map, so shadow detail matches the analysis scale.
++- A 5 % fill light keeps shadowed ground faintly visible. It is labelled as a display aid, not earthshine.
++
++**Overlays:**
++- computed sunlight and shadow;
++- hazard spots (10°, 0.3 m, illustrative, Milestone 2 layers);
++- plain terrain;
++- a Sun/Earth az/el, angular size and phase readout;
++- computed visibility at the spot vs the planner value;
++- a 360° horizon profile (5 m-site horizon at the spot, planner 240 m horizon, Sun, Earth, heading).
++
++**Controls:**
++- drag to look;
++- wheel or select to zoom (field of view 10–100°);
++- arrow keys to look;
++- W A S D to walk 5 m (Shift for 50 m), staying on the terrain and 200 m inside the crop edge;
++- look at Sun / Earth / north;
++- compass heading readout;
++- return to site;
++- back to the panorama, or to the 3D terrain map;
++- the shared time slider.
++
++**WebXR:**
++- Look-around only, with no artificial locomotion (to limit motion discomfort).
++- The rig is aligned to local east/up/north, and an animation loop runs only during a session.
++- Where VR is unsupported, the app says so and the desktop view is the full experience.
++
++## Verification
++
++**1. Geometry** (`firstPerson.test.ts`):
++- The camera stands exactly the eye height above the source grid at the crop origin, and returns null outside the crop.
++- Look vectors round-trip; the local basis is orthonormal.
++- Sun and Earth directions in the view equal the Milestone 4 az/el at the camera within 1e-6°, at the crop centre and 4 km off-centre near the pole.
++- Walking stays on the surface.
++
++**2. Rendered terrain vs the accepted 360° horizon.** At each site location, the horizon the first-person view shows (20 m mesh within the crop plus the 240 m silhouette beyond) was compared with the planner mask, in degrees:
++
++| Site | Median abs | p95 abs | Max | Mean (view − planner) |
++|---|---|---|---|---|
++| Connecting Ridge (Site01) | 0.19 | 1.76 | 2.13 | −0.43 |
++| Shackleton Rim (Site04) | 0.48 | 1.34 | 1.44 | +0.59 |
++| Nobile Rim 1 (Site06) | 0.62 | 3.34 | 3.48 | +1.19 |
++
++The differences come from the near-field 5 m relief, which the 240 m planner terrain smooths. They also come from the observer elevation: at Nobile, the 5 m surface is 21 m below the 240 m DEM elevation the planner uses, which raises the horizon. Milestone 5 measured the 20 m-mesh horizon against a native 5 m reference: median 0.01–0.04°, p95 0.28–0.67°.
++
++**3. Rendered pixels vs the calculation** (`tests/e2e/surface3d_test.py`, software WebGL):
++- **Shackleton crater wall, 2027-01-05 12:00 UTC:** the Sun is 1.16° above the smooth horizon, but the calculation gives 0 % visible. The rendered pixel at the Sun's projected position is terrain, not Sun.
++- **Connecting Ridge, 2026-11-22 01:00 UTC:** the calculation gives 100 %, and the Sun's colour is rendered at its projected pixel.
++- **Bearings:** the readout matches the Horizons fixture for Connecting Ridge (Sun within 0.01°, Earth within 0.02°; the observer stands 1.7 m above the mesh rather than on the sphere).
++- **Look at Earth:** centres the Earth disc on screen within 2 px.
++
++**4. Paths exercised:**
++- a date change (Next hour moves the Sun);
++- walking;
++- unsupported WebXR (headless Chromium reports none, and the message says so);
++- the coverage fallback (Apollo 11: 3D disabled, panorama shown);
++- the load-error path (missing horizon inputs give a visible alert);
++- a 390 px mobile layout with no overflow;
++- a clean console.
++
++**5. Regression:**
++- 123 unit tests and 28 Python tests pass.
++- The smoke (original panorama Surface View included), terrain, hazard, astronomy, lighting and finder e2e suites pass.
++- `tsc`, ESLint, Prettier and the build are clean.
++
++The terrain compare e2e once reported a cancelled 10 MB layer download while all suites ran back to back on the software renderer. It passed twice when rerun alone. Milestone 7 does not change that code path; the race is recorded as a known intermittent test issue.
++
++Reference screenshots are in `pipeline/out/surface3d-screenshots/` (Earth look-at, Sun hidden, Sun visible, mobile). They are regenerated by the e2e run and not committed.
++
++## Realism limits (also shown in the view)
++
++- **Mesh:** a 20 m mesh of a DEM that is about 90 % interpolated. Features below about 20–40 m, boulders and small craters are absent. Only a 240 m silhouette is drawn beyond the 8 km crop.
++- **Shadows:** computed every 80 m by the horizon method. Brightness is not photometric. There is no earthshine, multiple scattering or lander lighting.
++- **Imagery:** none. LROC WAC registration is unverified, so it stays off. NAC, QuickMap and ShadowCam imagery are not integrated.
++- **Not modelled:** dust, regolith physics or real-time surface interaction.
++- **VR:** implemented against the WebXR API, but only the unsupported path could be tested here (no headset available). It is look-around only.
++- **Performance:** about 160 k vertices per site; the first-person view renders on demand (no continuous loop on desktop).
+diff --git a/docs/PROJECT_STATUS.md b/docs/PROJECT_STATUS.md
+index 351448c..7f0b2f8 100644
+--- a/docs/PROJECT_STATUS.md
++++ b/docs/PROJECT_STATUS.md
+@@ -1,8 +1,23 @@
+ # LunaWindow project status
+ 
+-Updated 2026-11-15. Branch `milestone-6` on `Muxsinjon/new_luna`, based on Milestone 5 (`ac22e2f`). Milestone 6 is complete and pushed; Milestones 7–9 have not started.
++Updated 2026-11-15. Branch `milestone-7` on `Muxsinjon/new_luna`, based on Milestone 6 (`bdbd5cd`). Milestone 7 is complete and pushed; Milestones 8–9 have not started.
+ 
+-## Milestone 6: completed (audit, then gaps only)
++## Milestone 7: completed (desktop first, optional VR)
++
++- **Verified existing:** the 360° horizon panorama, now also the fallback.
++- **Added:** a 3D first-person view on the three 5 m sites. It uses:
++  - the same verified mesh;
++  - the Milestone 4 Sun/Earth directions (true angular sizes, Earth phase from lighting);
++  - the Milestone 5 computed shadows;
++  - the 240 m silhouette beyond the crop;
++  - a black sky.
++- **Controls and overlays:** walking, look-at buttons, field of view, eye height, a horizon-profile overlay and hazard spots.
++- **WebXR:** offered only when supported, look-around only.
++- **Proof:** view directions equal the Milestone 4 values within 1e-6°. Rendered Sun pixels are hidden or visible exactly as the horizon calculation says. The horizon matches the planner mask within a median of 0.2–0.6°.
++
++See [Milestone 7 acceptance](MILESTONE7_ACCEPTANCE.md).
++
++## Milestone 6: completed (preserved)
+ 
+ - **Verified existing:** finder search, thresholds, statuses, coverage handling, explanations, overview grid and hand-offs.
+ - **Added:**
+diff --git a/milestones/README.md b/milestones/README.md
+index 7cae616..af41901 100644
+--- a/milestones/README.md
++++ b/milestones/README.md
+@@ -8,6 +8,7 @@ The complete working project is at the repository root. These files preserve the
+ - `MILESTONE_4.patch`: the Milestone 4 commit after `3b43df0` (astronomy audit, validation and gap fixes).
+ - `MILESTONE_5.patch`: the Milestone 5 commit after `09f42c0` (terrain-aware sunlight and Earth line of sight), with binary illumination inputs.
+ - `MILESTONE_6.patch`: the Milestone 6 commit after `ac22e2f` (explainable mission-date recommendation).
+-- Separate acceptance reports: `docs/MILESTONE1_ACCEPTANCE.md` to `docs/MILESTONE6_ACCEPTANCE.md`.
++- `MILESTONE_7.patch`: the Milestone 7 commit after `bdbd5cd` (immersive surface view, optional WebXR).
++- Separate acceptance reports: `docs/MILESTONE1_ACCEPTANCE.md` to `docs/MILESTONE7_ACCEPTANCE.md`.
+ 
+ Use `git am` on the corresponding base only when recovering a missing milestone. Do not apply these patches to this final repository: their commits are already ancestors of main. The original complete Milestone 1 ZIP remains at the root for existing download links.
+diff --git a/tests/e2e/surface3d_test.py b/tests/e2e/surface3d_test.py
+new file mode 100644
+index 0000000..a0273a7
+--- /dev/null
++++ b/tests/e2e/surface3d_test.py
+@@ -0,0 +1,109 @@
++"""Milestone 7: first-person surface view on the 5 m terrain (rendered checks, software renderer).
++
++Usage: python tests/e2e/surface3d_test.py [base_url] [--screenshots DIR]
++Checks: Sun/Earth bearings vs the Horizons fixture (Milestone 4), pixel probe that the rendered Sun disc is visible
++when the horizon calculation says so and hidden by terrain when it does not, look-at buttons, walking, date changes,
++unsupported WebXR path, coverage fallback, load-error path, mobile layout, clean console.
++"""
++import argparse, json, re
++from pathlib import Path
++from playwright.sync_api import expect, sync_playwright
++
++ROOT = Path(__file__).resolve().parents[2]
++p = argparse.ArgumentParser()
++p.add_argument('base', nargs='?', default='http://localhost:4173/')
++p.add_argument('--screenshots', type=Path, default=ROOT / 'pipeline/out/surface3d-screenshots')
++a = p.parse_args()
++a.screenshots.mkdir(parents=True, exist_ok=True)
++ref = json.loads((ROOT / 'web/src/lib/__fixtures__/horizons_topocentric.json').read_text())
++T = '2027-07-01T00:00:00Z'
++i = ref['times'].index(T)
++cr = next(s for s in ref['sites'] if s['id'] == 'connecting-ridge')
++wrap = lambda d: (d + 180) % 360 - 180
++PROBE = """([x, y]) => { const c = document.querySelector('[data-testid=first-person] canvas'); const t = document.createElement('canvas');
++ t.width = c.width; t.height = c.height; const g = t.getContext('2d'); g.drawImage(c, 0, 0); return Array.from(g.getImageData(x, y, 1, 1).data) }"""
++
++with sync_playwright() as pw:
++    b = pw.chromium.launch(headless=True, args=['--enable-unsafe-swiftshader'])
++    page = b.new_page(viewport={'width': 1440, 'height': 1000})
++    console = []
++    page.on('console', lambda m: console.append((m.type, m.text)) if m.type in ('error', 'warning') else None)
++    page.on('pageerror', lambda e: console.append(('pageerror', str(e))))
++    page.goto(a.base + f'#ws=surface&a=connecting-ridge&sv=A&fp=1&t={T}&d=14&at={T}')
++    sky = page.get_by_test_id('fp-sky')
++    expect(sky).to_have_attribute('data-sun-frac', re.compile(r'.'), timeout=60000)
++    canvas = page.locator('[data-testid=first-person] canvas')
++    # bearings agree with JPL Horizons topocentric values (site 1.7 m above the 20 m mesh vs Horizons on the sphere)
++    got = {k: float(sky.get_attribute(f'data-{k}')) for k in ('sun-az', 'sun-el', 'earth-az', 'earth-el')}
++    assert abs(got['sun-el'] - cr['sun']['el'][i]) < 0.01 and abs(wrap(got['sun-az'] - cr['sun']['az'][i])) < 0.01, got
++    assert abs(got['earth-el'] - cr['earth']['el'][i]) < 0.02 and abs(wrap(got['earth-az'] - cr['earth']['az'][i])) < 0.02, got
++    # look at Earth: view direction = Earth bearing; the Earth disc is drawn at screen centre
++    v0 = canvas.get_attribute('data-view')
++    page.get_by_role('button', name='Look at Earth').click()
++    expect(canvas).not_to_have_attribute('data-view', v0)
++    view = json.loads(canvas.get_attribute('data-view'))
++    assert abs(wrap(view[0] - got['earth-az'])) < 0.01 and abs(view[1] - got['earth-el']) < 0.01, view
++    epx = json.loads(canvas.get_attribute('data-earth-px'))
++    w, h = page.evaluate("() => { const c = document.querySelector('[data-testid=first-person] canvas'); return [c.width, c.height] }")
++    assert abs(epx[0] - w / 2) <= 2 and abs(epx[1] - h / 2) <= 2, (epx, w, h)
++    page.screenshot(path=str(a.screenshots / 'surface3d-earth.png'), full_page=True)
++
++    # Shackleton Rim crater wall, 2027-01-05 12:00 UTC: Sun above 0° but hidden by the 5 m terrain (computed 0 %)
++    def sun_pixel(site, at):
++        page.goto(a.base + f'#ws=surface&a={site}&sv=A&fp=1&t={at[:10]}T00:00Z&d=14&at={at}')
++        page.reload()
++        expect(sky).to_have_attribute('data-sun-frac', re.compile(r'.'), timeout=60000)
++        page.get_by_label('Surface overlay').select_option('none')
++        page.get_by_role('button', name='Look at the Sun').click()
++        page.wait_for_timeout(500)
++        px = json.loads(canvas.get_attribute('data-sun-px'))
++        return float(sky.get_attribute('data-sun-frac')), float(sky.get_attribute('data-sun-el')), page.evaluate(PROBE, px)
++
++    sun_rgb = page.evaluate("() => getComputedStyle(document.documentElement).getPropertyValue('--c-sun').trim()")
++    tgt = [int(sun_rgb[k:k + 2], 16) for k in (1, 3, 5)]
++    close = lambda c: sum(abs(c[k] - tgt[k]) for k in range(3)) < 60
++    frac, el, rgb = sun_pixel('shackleton-rim-site04', '2027-01-05T12:00:00Z')
++    assert el > 0 and frac == 0, (el, frac)
++    assert not close(rgb), ('Sun drawn although terrain hides it', rgb)
++    page.screenshot(path=str(a.screenshots / 'surface3d-sun-hidden.png'), full_page=True)
++    frac2, el2, rgb2 = sun_pixel('connecting-ridge', '2026-11-22T01:00:00Z')
++    assert frac2 == 1 and close(rgb2), ('visible Sun not drawn', frac2, rgb2)
++    page.screenshot(path=str(a.screenshots / 'surface3d-sun-visible.png'), full_page=True)
++    # time slider moves the Sun; walking moves the observer on the terrain
++    before = sky.get_attribute('data-sun-az')
++    page.get_by_role('button', name='Next hour').click()
++    expect(sky).not_to_have_attribute('data-sun-az', before)
++    pos = page.get_by_text(re.compile(r'Position: ')).inner_text()
++    canvas.focus()
++    for _ in range(4):
++        page.keyboard.press('Shift+w')
++    expect(page.get_by_text(re.compile(r'Position: '))).not_to_have_text(pos)
++    expect(page.get_by_role('button', name='Return to the site location')).to_be_visible()
++    # WebXR: unsupported in headless Chromium, so the desktop view is the full experience
++    expect(page.get_by_test_id('xr-status')).to_have_attribute('data-xr', 'no')
++    # horizon profile overlay and realism limits are present
++    expect(page.get_by_test_id('horizon-profile')).to_be_visible()
++    expect(page.get_by_text('Realism limits of this view')).to_be_visible()
++    # coverage fallback: no 5 m terrain at Apollo 11
++    page.goto(a.base + '#ws=surface&a=apollo-11&sv=A&fp=1')
++    page.reload()
++    expect(page.get_by_test_id('fp-unavailable')).to_be_visible(timeout=20000)
++    expect(page.get_by_role('radio', name='3D first person (5 m terrain)')).to_be_disabled()
++    expect(page.get_by_role('radio', name='360° horizon panorama')).to_be_checked()
++    # load-error path: missing horizon inputs are reported, not hidden
++    page.route('**/site01/illumination/illumination.json', lambda r: r.fulfill(status=404, body='missing'))
++    page.goto(a.base + f'#ws=surface&a=connecting-ridge&sv=A&fp=1&t={T}&d=14&at={T}')
++    page.reload()
++    expect(page.get_by_role('alert').filter(has_text='Horizon inputs could not be loaded')).to_be_visible(timeout=40000)
++    page.unroute('**/site01/illumination/illumination.json')
++    # mobile
++    page.set_viewport_size({'width': 390, 'height': 844})
++    page.reload()
++    expect(sky).to_have_attribute('data-sun-frac', re.compile(r'.'), timeout=60000)
++    assert page.evaluate('document.documentElement.scrollWidth<=window.innerWidth'), 'Mobile overflow'
++    page.screenshot(path=str(a.screenshots / 'surface3d-mobile.png'), full_page=True)
++    bad = [m for m in console if not ('GPU stall due to ReadPixels' in m[1] or ('404' in m[1] and m[0] == 'error'))]
++    assert not bad, bad
++    print(f'PASS first-person view: bearings vs Horizons {got}, Earth centred after look-at, Sun hidden by terrain '
++          f'(el {el:.2f}°, computed 0 %) and visible (computed 100 %), time, walking, no-XR path, fallback, error path, mobile')
++    b.close()
+diff --git a/web/src/components/FirstPersonView.tsx b/web/src/components/FirstPersonView.tsx
+new file mode 100644
+index 0000000..607d1bf
+--- /dev/null
++++ b/web/src/components/FirstPersonView.tsx
+@@ -0,0 +1,325 @@
++// Milestone 7: immersive first-person view on the real 5 m terrain meshes (desktop first, optional WebXR).
++// Geometry comes from the verified mesh (terrainMesh.meshArrays), Sun/Earth from the Milestone 4 ephemeris path,
++// shading/shadow from the Milestone 5 horizon algorithm. Terrain beyond the crop is drawn as the LOLA 240 m
++// far-field silhouette so the discs are hidden where the calculation hides them. Black sky: no atmosphere.
++import { useEffect, useRef, useState } from 'react'
++import * as THREE from 'three'
++import type { Vec3 } from '../lib/geometry'
++import { lookVector, type CameraFrame } from '../lib/firstPerson'
++import { meshArrays, type TerrainAsset } from '../lib/terrainMesh'
++import type { FarField } from '../lib/terrainShadow'
++import { cssVar } from '../lib/theme'
++
++export interface Bodies {
++  /** mesh-frame unit directions from the camera */
++  sun: Vec3
++  earth: Vec3
++  sunRadiusDeg: number
++  earthRadiusDeg: number
++}
++
++interface XRSystemLike {
++  isSessionSupported(mode: string): Promise<boolean>
++  requestSession(mode: string, init?: unknown): Promise<XRSession>
++}
++
++const SKY_DIST = 100_000 // m: Sun/Earth discs drawn at 100 km with their true angular size
++const RING_DIST = 40_000 // m: far-terrain silhouette ring
++
++export default function FirstPersonView({
++  asset,
++  frame,
++  far,
++  farAt,
++  bodies,
++  shade,
++  view,
++  fov,
++  theme,
++  onView,
++  onFov,
++  onWalk,
++}: {
++  asset: TerrainAsset
++  frame: CameraFrame
++  far: FarField | null
++  /** far-field horizon (deg) at the camera for an azimuth; null = not available */
++  farAt: ((az: number) => number) | null
++  bodies: Bodies
++  /** optional per-vertex brightness texture (computed sunlit fraction); null = no computed shadow */
++  shade: THREE.Texture | null
++  view: { az: number; el: number }
++  fov: number
++  theme: string
++  onView: (v: { az: number; el: number }) => void
++  onFov: (f: number) => void
++  onWalk: (azDeg: number, metres: number) => void
++}) {
++  const host = useRef<HTMLDivElement>(null)
++  const api = useRef<{
++    setCamera: (f: CameraFrame, v: { az: number; el: number }, fov: number) => void
++    setBodies: (b: Bodies, f: CameraFrame) => void
++    setShade: (t: THREE.Texture | null) => void
++    setRing: (f: CameraFrame) => void
++  } | null>(null)
++  const [error, setError] = useState('')
++  const [xr, setXr] = useState<'checking' | 'yes' | 'no'>('checking')
++  const latest = useRef({ view, fov, onView, onFov, onWalk })
++  useEffect(() => {
++    latest.current = { view, fov, onView, onFov, onWalk }
++  })
++  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
++  const ringFar = useRef(farAt)
++
++  useEffect(() => {
++    const nav = navigator as Navigator & { xr?: XRSystemLike }
++    if (!nav.xr) {
++      // eslint-disable-next-line react-hooks/set-state-in-effect -- capability probe result
++      setXr('no')
++      return
++    }
++    nav.xr.isSessionSupported('immersive-vr').then(
++      (ok) => setXr(ok ? 'yes' : 'no'),
++      () => setXr('no'),
++    )
++  }, [])
++
++  // scene: rebuilt only when the terrain asset or theme changes
++  useEffect(() => {
++    const container = host.current!
++    let renderer: THREE.WebGLRenderer
++    try {
++      renderer = new THREE.WebGLRenderer({ antialias: true, logarithmicDepthBuffer: true, preserveDrawingBuffer: true })
++    } catch {
++      // eslint-disable-next-line react-hooks/set-state-in-effect -- report graphics failure to the fallback UI
++      setError('WebGL is unavailable. The 360° horizon panorama remains available.')
++      return
++    }
++    rendererRef.current = renderer
++    renderer.xr.enabled = true
++    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
++    const canvas = renderer.domElement
++    canvas.tabIndex = 0
++    canvas.setAttribute(
++      'aria-label',
++      'First-person view of the lunar surface. Drag to look around, wheel to zoom, W A S D to walk, arrow keys to look.',
++    )
++    container.appendChild(canvas)
++    const scene = new THREE.Scene()
++    scene.background = new THREE.Color(cssVar('--c-sky-night')) // no atmosphere: black sky, no haze
++    const arrays = meshArrays(asset)
++    const geometry = new THREE.BufferGeometry()
++    geometry.setAttribute('position', new THREE.BufferAttribute(arrays.positions, 3))
++    geometry.setAttribute('uv', new THREE.BufferAttribute(arrays.uv, 2))
++    geometry.setIndex(new THREE.BufferAttribute(arrays.indices, 1))
++    geometry.computeVertexNormals()
++    const terrainMat = new THREE.MeshLambertMaterial({ color: cssVar('--c-terrain-edge') })
++    const terrain = new THREE.Mesh(geometry, terrainMat)
++    scene.add(terrain)
++    // far terrain silhouette (LOLA 240 m beyond the crop): a ring from 6° below to the far-field horizon
++    const ringGeom = new THREE.BufferGeometry()
++    const ringMat = new THREE.MeshBasicMaterial({ color: cssVar('--c-terrain-bottom'), side: THREE.DoubleSide })
++    const ring = new THREE.Mesh(ringGeom, ringMat)
++    scene.add(ring)
++    const sunLight = new THREE.DirectionalLight(0xffffff, 3)
++    scene.add(sunLight, sunLight.target)
++    // display aid only (not earthshine or scattering): keeps shadowed ground faintly visible
++    scene.add(new THREE.AmbientLight(0xffffff, 0.05))
++    const sun = new THREE.Mesh(new THREE.CircleGeometry(1, 48), new THREE.MeshBasicMaterial({ color: cssVar('--c-sun') }))
++    const earth = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 24), new THREE.MeshLambertMaterial({ color: cssVar('--c-earth') }))
++    scene.add(sun, earth)
++    const rig = new THREE.Group()
++    const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 300_000)
++    rig.add(camera)
++    scene.add(rig)
++    let current: CameraFrame | null = null
++
++    const render = () => {
++      renderer.render(scene, camera)
++      if (!current) return
++      const project = (o: THREE.Object3D) => {
++        const p = o.getWorldPosition(new THREE.Vector3()).project(camera)
++        return p.z < 1 && Math.abs(p.x) <= 1 && Math.abs(p.y) <= 1
++          ? [Math.round(((p.x + 1) / 2) * canvas.width), Math.round(((1 - p.y) / 2) * canvas.height)]
++          : null
++      }
++      canvas.dataset.sunPx = JSON.stringify(project(sun))
++      canvas.dataset.earthPx = JSON.stringify(project(earth))
++    }
++    const setCamera = (f: CameraFrame, v: { az: number; el: number }, fovDeg: number) => {
++      current = f
++      rig.position.set(...f.pos)
++      // rig axes: x = east, y = up, z = south (camera looks along -z = north before head/view rotation)
++      const m = new THREE.Matrix4().makeBasis(
++        new THREE.Vector3(...f.east),
++        new THREE.Vector3(...f.up),
++        new THREE.Vector3(...f.north).negate(),
++      )
++      rig.quaternion.setFromRotationMatrix(m)
++      if (!renderer.xr.isPresenting) {
++        camera.rotation.set(0, 0, 0)
++        camera.rotateY((-v.az * Math.PI) / 180)
++        camera.rotateX((v.el * Math.PI) / 180)
++      }
++      camera.fov = fovDeg
++      camera.updateProjectionMatrix()
++      canvas.dataset.view = JSON.stringify([Number(v.az.toFixed(3)), Number(v.el.toFixed(3)), fovDeg])
++      render()
++    }
++    const setBodies = (b: Bodies, f: CameraFrame) => {
++      const place = (o: THREE.Object3D, dir: Vec3, radiusDeg: number) => {
++        o.position.set(f.pos[0] + dir[0] * SKY_DIST, f.pos[1] + dir[1] * SKY_DIST, f.pos[2] + dir[2] * SKY_DIST)
++        o.scale.setScalar(SKY_DIST * Math.tan((radiusDeg * Math.PI) / 180))
++        o.lookAt(...f.pos)
++      }
++      place(sun, b.sun, b.sunRadiusDeg)
++      place(earth, b.earth, b.earthRadiusDeg)
++      sunLight.position.set(f.pos[0] + b.sun[0] * 1000, f.pos[1] + b.sun[1] * 1000, f.pos[2] + b.sun[2] * 1000)
++      sunLight.target.position.set(...f.pos)
++      render()
++    }
++    const setShade = (t: THREE.Texture | null) => {
++      terrainMat.map = t
++      terrainMat.color.set(t ? 0xffffff : cssVar('--c-terrain-edge'))
++      terrainMat.needsUpdate = true
++      canvas.dataset.shadow = t ? 'computed' : 'none'
++      render()
++    }
++    const setRing = (f: CameraFrame) => {
++      const pos: number[] = []
++      const idx: number[] = []
++      const fa = ringFar.current
++      for (let i = 0; i <= 720; i++) {
++        const az = i * 0.5
++        const top = fa ? fa(az) : -90
++        const lo = lookVector(f, az, -6),
++          hi = lookVector(f, az, Math.max(-6, top))
++        pos.push(...lo.map((x, k) => f.pos[k] + x * RING_DIST), ...hi.map((x, k) => f.pos[k] + x * RING_DIST))
++        if (i < 720) idx.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2)
++      }
++      ringGeom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3))
++      ringGeom.setIndex(idx)
++      ringGeom.computeBoundingSphere()
++      render()
++    }
++    api.current = { setCamera, setBodies, setShade, setRing }
++
++    const resize = new ResizeObserver(() => {
++      const w = Math.max(1, container.clientWidth),
++        h = Math.max(1, container.clientHeight)
++      renderer.setSize(w, h)
++      camera.aspect = w / h
++      camera.updateProjectionMatrix()
++      render()
++    })
++    resize.observe(container)
++    let drag: { x: number; y: number; az: number; el: number } | null = null
++    const down = (e: PointerEvent) => {
++      canvas.setPointerCapture(e.pointerId)
++      drag = { x: e.clientX, y: e.clientY, ...latest.current.view }
++    }
++    const move = (e: PointerEvent) => {
++      if (!drag) return
++      const degPerPx = latest.current.fov / canvas.clientHeight
++      latest.current.onView({
++        az: (((drag.az - (e.clientX - drag.x) * degPerPx) % 360) + 360) % 360,
++        el: Math.max(-80, Math.min(80, drag.el + (e.clientY - drag.y) * degPerPx)),
++      })
++    }
++    const up = () => (drag = null)
++    const wheel = (e: WheelEvent) => {
++      e.preventDefault()
++      latest.current.onFov(Math.max(10, Math.min(100, latest.current.fov * (e.deltaY > 0 ? 1.1 : 0.9))))
++    }
++    const key = (e: KeyboardEvent) => {
++      const v = latest.current.view
++      const look: Record<string, [number, number]> = { ArrowLeft: [-3, 0], ArrowRight: [3, 0], ArrowUp: [0, 2], ArrowDown: [0, -2] }
++      const walkKeys: Record<string, number> = { w: 0, d: 90, s: 180, a: 270 }
++      if (look[e.key]) {
++        e.preventDefault()
++        latest.current.onView({ az: (v.az + look[e.key][0] + 360) % 360, el: Math.max(-80, Math.min(80, v.el + look[e.key][1])) })
++      } else if (e.key.toLowerCase() in walkKeys) {
++        e.preventDefault()
++        latest.current.onWalk(v.az + walkKeys[e.key.toLowerCase()], e.shiftKey ? 50 : 5)
++      }
++    }
++    canvas.addEventListener('pointerdown', down)
++    canvas.addEventListener('pointermove', move)
++    canvas.addEventListener('pointerup', up)
++    canvas.addEventListener('wheel', wheel, { passive: false })
++    canvas.addEventListener('keydown', key)
++    const lost = (e: Event) => {
++      e.preventDefault()
++      setError('Graphics context lost. Reload Surface View.')
++    }
++    canvas.addEventListener('webglcontextlost', lost)
++    renderer.xr.addEventListener('sessionstart', () => renderer.setAnimationLoop(render))
++    renderer.xr.addEventListener('sessionend', () => {
++      renderer.setAnimationLoop(null)
++      if (current) setCamera(current, latest.current.view, latest.current.fov)
++    })
++    return () => {
++      api.current = null
++      rendererRef.current = null
++      renderer.setAnimationLoop(null)
++      resize.disconnect()
++      canvas.removeEventListener('pointerdown', down)
++      canvas.removeEventListener('pointermove', move)
++      canvas.removeEventListener('pointerup', up)
++      canvas.removeEventListener('wheel', wheel)
++      canvas.removeEventListener('keydown', key)
++      canvas.removeEventListener('webglcontextlost', lost)
++      geometry.dispose()
++      terrainMat.dispose()
++      ringGeom.dispose()
++      ringMat.dispose()
++      for (const o of [sun, earth]) {
++        o.geometry.dispose()
++        ;(o.material as THREE.Material).dispose()
++      }
++      renderer.dispose()
++      canvas.remove()
++    }
++  }, [asset, theme])
++
++  useEffect(() => {
++    ringFar.current = farAt
++    api.current?.setRing(frame)
++  }, [farAt, frame, far])
++  useEffect(() => api.current?.setCamera(frame, view, fov), [frame, view, fov])
++  useEffect(() => api.current?.setBodies(bodies, frame), [bodies, frame])
++  useEffect(() => api.current?.setShade(shade), [shade])
++
++  const enterVr = async () => {
++    const nav = navigator as Navigator & { xr?: XRSystemLike }
++    const r = rendererRef.current
++    if (!nav.xr || !r) return
++    try {
++      const session = await nav.xr.requestSession('immersive-vr', { optionalFeatures: ['local-floor'] })
++      await r.xr.setSession(session)
++    } catch (e) {
++      setError(`VR session could not start: ${(e as Error).message}`)
++    }
++  }
++
++  return (
++    <>
++      <div className="fp-view" ref={host} data-testid="first-person" />
++      {error && <p role="alert">{error}</p>}
++      <p className="hint" data-testid="xr-status" data-xr={xr}>
++        {xr === 'yes' ? (
++          <>
++            <button type="button" className="btn" onClick={() => void enterVr()}>
++              Enter VR
++            </button>{' '}
++            Look-around only in VR (no artificial movement, to limit motion discomfort); time and position stay fixed during the session.
++          </>
++        ) : xr === 'no' ? (
++          'VR is not available in this browser or device. The desktop view above is the complete experience; VR is optional.'
++        ) : (
++          'Checking for VR support…'
++        )}
++      </p>
++    </>
++  )
++}
+diff --git a/web/src/components/SurfaceFirstPerson.tsx b/web/src/components/SurfaceFirstPerson.tsx
+new file mode 100644
+index 0000000..1bc7c8b
+--- /dev/null
++++ b/web/src/components/SurfaceFirstPerson.tsx
+@@ -0,0 +1,295 @@
++// Milestone 7: Surface View 3D first-person mode on the processed 5 m sites (falls back to the 360° panorama).
++import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
++import * as THREE from 'three'
++import { bodyVectorsFromSite, makeCtx, sampleAt, vectorsAt } from '../lib/analysis'
++import type { Site } from '../lib/data'
++import { azElFromLocal, cameraFrame, DEFAULT_EYE_M, horizonProfile, nearestVertex, walk } from '../lib/firstPerson'
++import { fmtAz, fmtDeg, fmtTime } from '../lib/format'
++import { DEFAULT_HAZARD_SETTINGS, useHazardTexture } from './hazardTexture'
++import { angularRadiusDeg, R_EARTH_KM, SUN_RADIUS_DEG } from '../lib/physics/disc'
++import { useStore } from '../lib/store'
++import { loadSiteLayers } from '../lib/terrainCache'
++import { bodyDirectionToLocal, type TerrainAsset, type TerrainSiteInfo } from '../lib/terrainMesh'
++import type { HazardData } from '../lib/hazardAnalysis'
++import { farHorizon, illuminationField, vertexVisibility } from '../lib/terrainShadow'
++import { useSiteIllumination } from './lightingOverlay'
++import { MODEL_LABEL } from '../lib/visibility'
++
++const FirstPersonView = lazy(() => import('./FirstPersonView'))
++const pct = (v: number) => `${(100 * v).toFixed(0)} %`
++type Overlay = 'sunlight' | 'hazard' | 'none'
++
++export default function SurfaceFirstPerson({ site, slot, info }: { site: Site; slot: 'A' | 'B'; info: TerrainSiteInfo }) {
++  const { s, set, data, theme } = useStore()
++  const [layers, setLayers] = useState<{ id: string; asset: TerrainAsset; hazards: HazardData } | null>(null)
++  const [error, setError] = useState('')
++  const illum = useSiteIllumination(info.id)
++  const [pos, setPos] = useState<{ key: string; lat: number; lon: number } | null>(null)
++  const [eye, setEye] = useState(DEFAULT_EYE_M)
++  const [view, setView] = useState({ az: 0, el: 2 })
++  const [fov, setFov] = useState(70)
++  const [overlay, setOverlay] = useState<Overlay>('sunlight')
++  useEffect(() => {
++    let live = true
++    loadSiteLayers(info.id).then(
++      (l) => live && setLayers({ id: info.id, ...l }),
++      (e: Error) => live && setError(e.message),
++    )
++    return () => {
++      live = false
++    }
++  }, [info.id])
++  const asset = layers && layers.id === info.id ? layers.asset : null
++  const key = `${info.id}:${site.id}`
++  const here = pos && pos.key === key ? pos : { key, lat: site.lat, lon: site.lon }
++  const frame = useMemo(() => (asset ? cameraFrame(asset, here.lat, here.lon, eye) : null), [asset, here.lat, here.lon, eye])
++  const far = illum?.data?.far ?? null
++  const vtx = useMemo(() => (asset ? nearestVertex(asset, here.lat, here.lon) : null), [asset, here.lat, here.lon])
++  const vecs = useMemo(
++    () => (frame ? bodyVectorsFromSite(data.eph, s.selectedTime, here.lat, here.lon, frame.groundM + eye) : null),
++    [frame, data, s.selectedTime, here.lat, here.lon, eye],
++  )
++  const bodies = useMemo(() => {
++    if (!vecs || !asset) return null
++    const o = asset.meta.origin
++    return {
++      sun: bodyDirectionToLocal(vecs.sun, o),
++      earth: bodyDirectionToLocal(vecs.earth, o),
++      sunRadiusDeg: SUN_RADIUS_DEG,
++      earthRadiusDeg: angularRadiusDeg(R_EARTH_KM, Math.hypot(...vecs.earth)),
++    }
++  }, [vecs, asset])
++  const dirs = useMemo(
++    () => (frame && bodies ? { sun: azElFromLocal(frame, bodies.sun), earth: azElFromLocal(frame, bodies.earth) } : null),
++    [frame, bodies],
++  )
++  const moon = useMemo(() => vectorsAt(data.eph, s.selectedTime), [data, s.selectedTime])
++  // computed visibility at the nearest mesh vertex (Milestone 5 algorithm; observer 2 m above the ground)
++  const visFixed = useMemo(
++    () => (asset && far && vtx ? vertexVisibility(asset, far, vtx.r, vtx.c, moon.sun, moon.earth) : null),
++    [asset, far, vtx, moon],
++  )
++  const farAt = useMemo(() => (asset && far && vtx ? (az: number) => farHorizon(asset, far, vtx.r, vtx.c, az) : null), [asset, far, vtx])
++  // computed sunlit fraction (Milestone 5 algorithm, every 80 m) as a brightness map; floor keeps shadows faintly visible
++  const shade = useMemo(() => {
++    if (overlay !== 'sunlight' || !asset || !far) return null
++    const f = illuminationField(asset, far, moon.sun, moon.earth, 4)
++    const c = document.createElement('canvas')
++    c.width = c.height = f.size
++    const ctx = c.getContext('2d')!
++    const img = ctx.createImageData(f.size, f.size)
++    for (let i = 0; i < f.sun.length; i++) {
++      const v = Math.round(255 * (0.04 + 0.96 * f.sun[i]))
++      img.data.set([v, v, v, 255], i * 4)
++    }
++    ctx.putImageData(img, 0, 0)
++    const t = new THREE.CanvasTexture(c)
++    t.colorSpace = THREE.SRGBColorSpace
++    t.repeat.set((f.size - 1) / f.size, (f.size - 1) / f.size)
++    t.offset.set(0.5 / f.size, 0.5 / f.size)
++    return t
++  }, [overlay, asset, far, moon])
++  useEffect(() => () => shade?.dispose(), [shade])
++  const hazardTex = useHazardTexture(
++    overlay === 'hazard' && layers?.id === info.id ? layers.hazards : null,
++    'hazard',
++    { slope: DEFAULT_HAZARD_SETTINGS.maxSlope, roughness: DEFAULT_HAZARD_SETTINGS.maxRough },
++    theme,
++  )
++  const profile = useMemo(() => (asset && far && vtx ? horizonProfile(asset, far, vtx.r, vtx.c, 2) : null), [asset, far, vtx])
++  const planner = useMemo(() => sampleAt(makeCtx(site, data.sites.azStepDeg), data.eph, s.selectedTime), [site, data, s.selectedTime])
++
++  if (error) return <p role="alert">{error}</p>
++  if (!asset || !frame || !bodies || !dirs) return <p role="status">Loading verified 5 m terrain for the first-person view…</p>
++  const moved = here.lat !== site.lat || here.lon !== site.lon
++  const doWalk = (az: number, m: number) => {
++    const p = walk(asset, frame, az, m)
++    if (p) setPos({ key, lat: p.lat, lon: p.lon })
++  }
++  return (
++    <section aria-labelledby="fp-h" className="fp">
++      <h3 id="fp-h">
++        First-person view at Site {slot}: {site.name}
++      </h3>
++      <p className="model-label">
++        NASA PGDA {info.product} 5 m DEM as a 20 m mesh; terrain beyond the 8 × 8 km crop from LOLA 240 m (silhouette).{' '}
++        {MODEL_LABEL.terrain}.
++      </p>
++      <div className="sv-tools">
++        <button type="button" className="btn" onClick={() => setView({ az: dirs.sun.az, el: dirs.sun.el })}>
++          Look at the Sun
++        </button>
++        <button type="button" className="btn" onClick={() => setView({ az: dirs.earth.az, el: dirs.earth.el })}>
++          Look at Earth
++        </button>
++        <button type="button" className="btn" onClick={() => setView({ az: 0, el: 2 })}>
++          Look north
++        </button>
++        <label className="field inline">
++          <span className="field-label">Field of view</span>
++          <select aria-label="First-person field of view" value={Math.round(fov)} onChange={(e) => setFov(+e.target.value)}>
++            {[30, 50, 70, 90].includes(Math.round(fov)) ? null : <option value={Math.round(fov)}>{Math.round(fov)}°</option>}
++            {[30, 50, 70, 90].map((f) => (
++              <option key={f} value={f}>
++                {f}°
++              </option>
++            ))}
++          </select>
++        </label>
++        <label className="field inline">
++          <span className="field-label">Eye height above local terrain</span>
++          <select aria-label="Eye height above local terrain" value={eye} onChange={(e) => setEye(+e.target.value)}>
++            <option value={1.7}>1.7 m (standing astronaut)</option>
++            <option value={2}>2 m (planner observer)</option>
++            <option value={10}>10 m (mast)</option>
++            <option value={100}>100 m (overview)</option>
++          </select>
++        </label>
++        <label className="field inline">
++          <span className="field-label">Surface overlay</span>
++          <select aria-label="Surface overlay" value={overlay} onChange={(e) => setOverlay(e.target.value as Overlay)}>
++            <option value="sunlight">Computed sunlight and shadow</option>
++            <option value="hazard">Hazard spots (10°, 0.3 m, illustrative)</option>
++            <option value="none">Plain terrain (sun-angle shading only)</option>
++          </select>
++        </label>
++      </div>
++      <Suspense fallback={<p role="status">Loading 3D view…</p>}>
++        <FirstPersonView
++          asset={asset}
++          frame={frame}
++          far={far}
++          farAt={farAt}
++          bodies={bodies}
++          shade={overlay === 'hazard' ? hazardTex : shade}
++          view={view}
++          fov={fov}
++          theme={theme}
++          onView={setView}
++          onFov={setFov}
++          onWalk={doWalk}
++        />
++      </Suspense>
++      <div className="fp-compass num" aria-live="polite" data-testid="fp-heading" data-az={view.az} data-el={view.el}>
++        Looking toward {fmtAz(view.az)} ({['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(view.az / 45) % 8]}), {fmtDeg(view.el)}{' '}
++        above the local horizontal; field of view {Math.round(fov)}°.
++      </div>
++      <p className="hint">
++        Drag to look around, wheel to zoom, arrow keys to look, W A S D to walk (5 m; Shift for 50 m) within 200 m of the crop edge.
++        Position: {here.lat.toFixed(5)}° latitude, {here.lon.toFixed(5)}° E, ground {frame.groundM.toFixed(1)} m, eye {eye} m above it.
++        {moved && (
++          <>
++            {' '}
++            <button type="button" className="btn quiet" onClick={() => setPos(null)}>
++              Return to the site location
++            </button>
++          </>
++        )}
++      </p>
++      <div
++        className="panel"
++        data-testid="fp-sky"
++        data-sun-az={dirs.sun.az}
++        data-sun-el={dirs.sun.el}
++        data-earth-az={dirs.earth.az}
++        data-earth-el={dirs.earth.el}
++        data-sun-frac={visFixed?.sunFrac}
++        data-earth-frac={visFixed?.earthFrac}
++      >
++        <p className="num">
++          At {fmtTime(s.selectedTime, s.tz)}: Sun azimuth {fmtAz(dirs.sun.az)}, elevation {fmtDeg(dirs.sun.el)}, apparent diameter{' '}
++          {(2 * bodies.sunRadiusDeg).toFixed(2)}°. Earth azimuth {fmtAz(dirs.earth.az)}, elevation {fmtDeg(dirs.earth.el)}, apparent
++          diameter {(2 * bodies.earthRadiusDeg).toFixed(2)}° (phase from the Sun direction).
++        </p>
++        {visFixed ? (
++          <p className="num">
++            Computed at this spot (5 m-site horizon, 2 m observer): Sun {pct(visFixed.sunFrac)} of disc visible, Earth{' '}
++            {pct(visFixed.earthFrac)} of disc in line of sight. Planner (240 m horizon) at the site location: Sun {pct(planner.sunFrac)},
++            Earth {pct(planner.earthFrac)}.
++          </p>
++        ) : illum?.error ? (
++          <p role="alert">
++            Horizon inputs could not be loaded ({illum.error}). The view shows the 5 m terrain without the far-terrain silhouette or
++            computed shadows; use the 360° panorama for visibility.
++          </p>
++        ) : (
++          <p role="status">Loading horizon inputs…</p>
++        )}
++        {profile && dirs && (
++          <HorizonProfile profile={profile} plannerMask={site.horizon} plannerStep={data.sites.azStepDeg} dirs={dirs} heading={view.az} />
++        )}
++      </div>
++      <details className="panel">
++        <summary>Realism limits of this view</summary>
++        <ul className="small">
++          <li>
++            Terrain is the NASA 5 m DEM decimated to a 20 m mesh (about 90 % of source pixels are interpolated); features smaller than about
++            20–40 m, boulders and small craters are not shown. Beyond the 8 km crop only a 240 m silhouette is drawn; nothing is invented.
++          </li>
++          <li>
++            Shadows are the Milestone 5 horizon calculation every 80 m (not a rendered shadow map); brightness is not photometric, and the
++            faint fill light on shadowed ground is a display aid, not earthshine or scattered light.
++          </li>
++          <li>
++            No surface imagery: LROC WAC registration is unverified, so it is not draped here. Black sky: the Moon has no atmosphere, haze
++            or refraction. No dust, regolith physics or lander lighting.
++          </li>
++          <li>
++            Sun and Earth are drawn at their true angular sizes; Earth&apos;s phase comes from lighting a sphere from the Sun direction.
++          </li>
++        </ul>
++      </details>
++      <div className="actions">
++        <button type="button" className="btn" onClick={() => set({ surface3d: false })}>
++          Back to the 360° panorama
++        </button>
++        <button type="button" className="btn" onClick={() => set({ ws: 'terrain', surfaceSite: slot })}>
++          Open the 3D terrain map
++        </button>
++      </div>
++    </section>
++  )
++}
++
++function HorizonProfile({
++  profile,
++  plannerMask,
++  plannerStep,
++  dirs,
++  heading,
++}: {
++  profile: ReturnType<typeof horizonProfile>
++  plannerMask: number[]
++  plannerStep: number
++  dirs: { sun: { az: number; el: number }; earth: { az: number; el: number } }
++  heading: number
++}) {
++  const W = 720,
++    Hh = 120
++  const lo = -5,
++    hi = Math.max(10, ...profile.combined, dirs.sun.el + 2, dirs.earth.el + 2)
++  const X = (az: number) => (az / 360) * W
++  const Y = (el: number) => Hh - ((el - lo) / (hi - lo)) * Hh
++  const line = (az: number[], el: number[]) => az.map((a, i) => `${i ? 'L' : 'M'}${X(a).toFixed(1)},${Y(el[i]).toFixed(1)}`).join('')
++  const pAz = plannerMask.map((_, i) => i * plannerStep)
++  return (
++    <figure data-testid="horizon-profile">
++      <svg
++        viewBox={`0 0 ${W} ${Hh}`}
++        className="fp-profile"
++        role="img"
++        aria-label="Horizon profile at this spot: 5 m-site horizon, planner 240 m horizon, Sun and Earth positions"
++      >
++        <path d={line(profile.az, profile.combined)} className="fp-h-site" />
++        <path d={line(pAz, plannerMask)} className="fp-h-planner" />
++        <line x1={X(heading)} x2={X(heading)} y1={0} y2={Hh} className="fp-h-heading" />
++        <circle cx={X(dirs.sun.az)} cy={Y(dirs.sun.el)} r={4} className="fp-h-sun" />
++        <circle cx={X(dirs.earth.az)} cy={Y(dirs.earth.el)} r={4} className="fp-h-earth" />
++      </svg>
++      <figcaption className="small">
++        Horizon from azimuth 0° (N) to 360°, {lo}° to {hi.toFixed(0)}° elevation: solid line 5 m-site horizon at this spot, dashed line
++        planner 240 m horizon at the site location, orange Sun, blue Earth, vertical line current heading.
++      </figcaption>
++    </figure>
++  )
++}
+diff --git a/web/src/lib/firstPerson.test.ts b/web/src/lib/firstPerson.test.ts
+new file mode 100644
+index 0000000..3644831
+--- /dev/null
++++ b/web/src/lib/firstPerson.test.ts
+@@ -0,0 +1,131 @@
++// Milestone 7: first-person camera geometry vs the accepted Milestone 4 directions and the planner's 360° horizon.
++import { readFileSync } from 'node:fs'
++import { resolve } from 'node:path'
++import { describe, expect, it } from 'vitest'
++import { bodyVectorsFromSite, makeCtx, sampleAt } from './analysis'
++import { buildEphemeris, type EphemMeta, type Site } from './data'
++import { azElFromLocal, cameraFrame, DEFAULT_EYE_M, horizonProfile, lookVector, nearestVertex, walk } from './firstPerson'
++import { decodeFarField, type IlluminationMeta } from './terrainShadow'
++import { bodyDirectionToLocal, sampleGrid, type TerrainAsset, type TerrainMeta } from './terrainMesh'
++
++const root = resolve(__dirname, '../../public/data')
++const buf = (p: string) => {
++  const b = readFileSync(resolve(root, p))
++  return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength)
++}
++const load = (id: string) => {
++  const meta = JSON.parse(readFileSync(resolve(root, `terrain/${id}/terrain.json`), 'utf8')) as TerrainMeta
++  const asset = {
++    meta,
++    heights: new Float32Array(buf(`terrain/${id}/elevation.f32`)),
++    errors: new Float32Array(buf(`terrain/${id}/uncertainty.f32`)),
++    imageUrl: null,
++  } as TerrainAsset
++  const im = JSON.parse(readFileSync(resolve(root, `terrain/${id}/illumination/illumination.json`), 'utf8')) as IlluminationMeta
++  return { asset, far: decodeFarField(im, buf(`terrain/${id}/illumination/far_el.i16`), buf(`terrain/${id}/illumination/far_d.u16`)) }
++}
++const eph = buildEphemeris(JSON.parse(readFileSync(resolve(root, 'ephem.json'), 'utf8')) as EphemMeta, new Float32Array(buf('ephem.bin')))
++const planner = JSON.parse(readFileSync(resolve(root, 'sites.json'), 'utf8')) as { azStepDeg: number; sites: Site[] }
++const flat = (lat: number, lon: number): Site => ({
++  id: 'f',
++  name: 'f',
++  group: 't',
++  lat,
++  lon,
++  source: 't',
++  verify: false,
++  elevationM: 0,
++  horizon: new Array(720).fill(-90),
++})
++
++describe('first-person camera frame', () => {
++  const { asset } = load('site01')
++  it('stands the documented eye height above the source grid, never outside the crop', () => {
++    const { lat, lon } = asset.meta.origin
++    const f = cameraFrame(asset, lat, lon)!
++    expect(f.groundM).toBeCloseTo(sampleGrid(asset, lat, lon)!, 9)
++    expect(f.pos[1]).toBeCloseTo(DEFAULT_EYE_M, 3) // origin vertex: eye height straight up the local Y axis
++    expect(cameraFrame(asset, 0, 0)).toBeNull()
++    expect(cameraFrame(asset, lat, lon, -1)).toBeNull()
++  })
++  it('look vectors round-trip and form an orthonormal local basis', () => {
++    const p = polarOffset(asset, 150, 330)
++    const f = cameraFrame(asset, p.lat, p.lon)!
++    for (const [az, el] of [
++      [0, 0],
++      [90, 10],
++      [213.4, -3.2],
++      [359.5, 45],
++    ]) {
++      const v = lookVector(f, az, el)
++      const back = azElFromLocal(f, v)
++      expect(back.el).toBeCloseTo(el, 9)
++      expect(((back.az - az + 540) % 360) - 180).toBeCloseTo(0, 9)
++    }
++    const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2]
++    expect(dot(f.east, f.north)).toBeCloseTo(0, 12)
++    expect(dot(f.east, f.up)).toBeCloseTo(0, 12)
++  })
++  it('Sun and Earth directions in the view equal the Milestone 4 az/el at the camera (incl. 4 km off-centre near the pole)', () => {
++    const t = Date.parse('2027-02-03T07:00:00Z')
++    for (const [r, c] of [
++      [200, 200],
++      [20, 380],
++      [390, 15],
++    ]) {
++      const p = polarOffset(asset, r, c)
++      const f = cameraFrame(asset, p.lat, p.lon, 0)!
++      const v = bodyVectorsFromSite(eph, t, p.lat, p.lon, f.groundM)
++      const ref = sampleAt(makeCtx({ ...flat(p.lat, p.lon), elevationM: f.groundM }, 0.5), eph, t)
++      const s = azElFromLocal(f, bodyDirectionToLocal(v.sun, asset.meta.origin))
++      const e = azElFromLocal(f, bodyDirectionToLocal(v.earth, asset.meta.origin))
++      expect(s.el).toBeCloseTo(ref.sunEl, 6)
++      expect(((s.az - ref.sunAz + 540) % 360) - 180).toBeCloseTo(0, 5)
++      expect(e.el).toBeCloseTo(ref.earthEl, 6)
++      expect(((e.az - ref.earthAz + 540) % 360) - 180).toBeCloseTo(0, 5)
++    }
++  })
++  it('walking stays on the terrain surface and inside the crop', () => {
++    const { lat, lon } = asset.meta.origin
++    const f = cameraFrame(asset, lat, lon)!
++    const p = walk(asset, f, 90, 100)!
++    expect(p.elevationM).toBeCloseTo(sampleGrid(asset, p.lat, p.lon)!, 9)
++    const moved = cameraFrame(asset, p.lat, p.lon)!
++    expect(Math.hypot(moved.pos[0] - f.pos[0], moved.pos[2] - f.pos[2])).toBeGreaterThan(95)
++    expect(walk(asset, f, 0, 5000)).toBeNull() // would leave the crop (200 m margin)
++  })
++})
++
++describe('first-person horizon vs the accepted planner 360° mask', () => {
++  for (const [id, plannerId] of [
++    ['site01', 'connecting-ridge'],
++    ['site04', 'shackleton-rim-site04'],
++    ['site06', 'nobile-rim-1-site06'],
++  ] as const) {
++    it(`${id}: median difference small; larger differences come from near-field 5 m relief`, () => {
++      const { asset, far } = load(id)
++      const ps = planner.sites.find((s) => s.id === plannerId)!
++      const v = nearestVertex(asset, ps.lat, ps.lon)!
++      const prof = horizonProfile(asset, far, v.r, v.c, 0.5)
++      const d = prof.combined.map((h, i) => h - ps.horizon[i])
++      const abs = d.map(Math.abs).sort((a, b) => a - b)
++      const med = abs[Math.floor(abs.length / 2)]
++      // planner: 240 m terrain everywhere; first person: 20 m mesh nearby + the same 240 m DEM beyond the crop
++      console.log(
++        `HORIZON_VS_PLANNER ${id} median ${med.toFixed(3)} p95 ${abs[Math.floor(0.95 * abs.length)].toFixed(3)} max ${abs.at(-1)!.toFixed(3)} mean ${(d.reduce((a, b) => a + b, 0) / d.length).toFixed(3)}`,
++      )
++      expect(med).toBeLessThan(1.0)
++    })
++  }
++})
++
++function polarOffset(asset: TerrainAsset, r: number, c: number) {
++  const m = asset.meta
++  const x = m.x0 + c * m.dx,
++    y = m.y0 + r * m.dy
++  const rho = Math.hypot(x, y)
++  return {
++    lat: (2 * Math.atan(rho / (2 * 1737400)) - Math.PI / 2) * (180 / Math.PI),
++    lon: ((Math.atan2(x, y) * 180) / Math.PI + 360) % 360,
++  }
++}
+diff --git a/web/src/lib/firstPerson.ts b/web/src/lib/firstPerson.ts
+new file mode 100644
+index 0000000..c672f95
+--- /dev/null
++++ b/web/src/lib/firstPerson.ts
+@@ -0,0 +1,102 @@
++// Milestone 7: first-person geometry on the processed 5 m terrain meshes. Pure functions, no DOM.
++// Mesh frame (from terrainMesh.ts): X east, Y up, Z south at the crop origin, metres, curved lunar surface.
++// Near the pole local east/north rotate across an 8 km crop, so the camera uses the ENU basis at its own position.
++import { enuBasis, unitVec, type Vec3 } from './geometry'
++import { localToSurface, sampleGrid, surfaceToLocal, bodyDirectionToLocal, type SurfacePoint, type TerrainAsset } from './terrainMesh'
++import { farHorizon, localHorizon, type FarField } from './terrainShadow'
++import { polarXY } from './terrain'
++
++const D2R = Math.PI / 180
++
++/** Default eye height above the local terrain surface (m): a standing astronaut's eye level, labelled in the UI. */
++export const DEFAULT_EYE_M = 1.7
++
++export interface CameraFrame {
++  /** camera position in the mesh frame (m) */
++  pos: Vec3
++  /** local east / north / up at the camera, in the mesh frame (unit vectors) */
++  east: Vec3
++  north: Vec3
++  up: Vec3
++  /** terrain height under the camera (m, relative to the 1737.4 km sphere) */
++  groundM: number
++  point: SurfacePoint
++}
++
++/** Camera frame `eyeM` above the 20 m mesh surface at (lat, lon); null outside valid terrain (never extrapolated). */
++export function cameraFrame(asset: TerrainAsset, lat: number, lon: number, eyeM = DEFAULT_EYE_M): CameraFrame | null {
++  const g = sampleGrid(asset, lat, lon)
++  if (g === null || !(eyeM >= 0)) return null
++  const origin = { ...asset.meta.origin, elevationM: sampleGrid(asset, asset.meta.origin.lat, asset.meta.origin.lon) ?? 0 }
++  const b = enuBasis(lon, lat)
++  return {
++    pos: surfaceToLocal({ lat, lon, elevationM: g + eyeM }, origin),
++    east: bodyDirectionToLocal(b.e, asset.meta.origin),
++    north: bodyDirectionToLocal(b.n, asset.meta.origin),
++    up: bodyDirectionToLocal(unitVec(lon, lat), asset.meta.origin),
++    groundM: g,
++    point: { lat, lon, elevationM: g },
++  }
++}
++
++/** Unit vector (mesh frame) for azimuth clockwise from local north and elevation above the local horizontal plane. */
++export function lookVector(f: CameraFrame, azDeg: number, elDeg: number): Vec3 {
++  const ce = Math.cos(elDeg * D2R),
++    se = Math.sin(elDeg * D2R),
++    sa = Math.sin(azDeg * D2R),
++    ca = Math.cos(azDeg * D2R)
++  return [0, 1, 2].map((i) => ce * (sa * f.east[i] + ca * f.north[i]) + se * f.up[i]) as Vec3
++}
++
++/** Inverse of lookVector: azimuth (0–360) and elevation (deg) of a mesh-frame direction seen from the camera. */
++export function azElFromLocal(f: CameraFrame, v: Vec3): { az: number; el: number } {
++  const d = (a: Vec3) => v[0] * a[0] + v[1] * a[1] + v[2] * a[2]
++  const e = d(f.east),
++    n = d(f.north),
++    u = d(f.up)
++  return { az: (((Math.atan2(e, n) / D2R) % 360) + 360) % 360, el: Math.atan2(u, Math.hypot(e, n)) / D2R }
++}
++
++/** Walk `distM` along the ground toward azimuth `azDeg`; stays `marginM` inside the crop (null if it would leave). */
++export function walk(asset: TerrainAsset, f: CameraFrame, azDeg: number, distM: number, marginM = 200): SurfacePoint | null {
++  const dir = lookVector(f, azDeg, 0)
++  const origin = { ...asset.meta.origin, elevationM: sampleGrid(asset, asset.meta.origin.lat, asset.meta.origin.lon) ?? 0 }
++  const p = localToSurface([f.pos[0] + dir[0] * distM, f.pos[1] + dir[1] * distM, f.pos[2] + dir[2] * distM], origin)
++  const m = asset.meta
++  const xy = polarXY(p.lat, p.lon)
++  const c = (xy.x - m.x0) / m.dx,
++    r = (xy.y - m.y0) / m.dy
++  const marginPx = marginM / m.dx
++  if (c < marginPx || r < marginPx || c > m.width - 1 - marginPx || r > m.height - 1 - marginPx) return null
++  const h = sampleGrid(asset, p.lat, p.lon)
++  return h === null ? null : { lat: p.lat, lon: p.lon, elevationM: h }
++}
++
++/** Nearest mesh vertex (row, col) to a surface point, or null outside the crop. */
++export function nearestVertex(asset: TerrainAsset, lat: number, lon: number): { r: number; c: number } | null {
++  const m = asset.meta,
++    p = polarXY(lat, lon)
++  const c = Math.round((p.x - m.x0) / m.dx),
++    r = Math.round((p.y - m.y0) / m.dy)
++  return r >= 0 && c >= 0 && r < m.height && c < m.width ? { r, c } : null
++}
++
++/**
++ * 360° horizon at the camera's nearest vertex: the 20 m mesh inside the crop, the LOLA 240 m far field outside, and
++ * their maximum (what the first-person view shows). Degrees, `step` apart from azimuth 0.
++ */
++export function horizonProfile(asset: TerrainAsset, far: FarField, r: number, c: number, step = 2) {
++  const az: number[] = [],
++    local: number[] = [],
++    farEl: number[] = [],
++    combined: number[] = []
++  for (let a = 0; a < 360; a += step) {
++    const l = localHorizon(asset, r, c, a, far.observerHeightM),
++      f = farHorizon(asset, far, r, c, a)
++    az.push(a)
++    local.push(l)
++    farEl.push(f)
++    combined.push(Math.max(l, f))
++  }
++  return { az, local, far: farEl, combined }
++}
+diff --git a/web/src/lib/state.test.ts b/web/src/lib/state.test.ts
+index 070af11..82164f6 100644
+--- a/web/src/lib/state.test.ts
++++ b/web/src/lib/state.test.ts
+@@ -8,6 +8,7 @@ describe('shared mission state in the URL', () => {
+       siteA: 'im-2',
+       siteB: 'custom:-88.6947,309.0939',
+       surfaceSite: 'B' as const,
++      surface3d: true,
+       durationDays: 3,
+       ws: 'finder' as const,
+       mode: 'explore' as const,
+diff --git a/web/src/lib/state.ts b/web/src/lib/state.ts
+index 9e2fc1f..694fa03 100644
+--- a/web/src/lib/state.ts
++++ b/web/src/lib/state.ts
+@@ -13,6 +13,8 @@ export interface MissionState {
+   siteB: string
+   /** which of the two sites Surface View shows */
+   surfaceSite: 'A' | 'B'
++  /** Surface View in 3D first-person mode on 5 m terrain (Milestone 7) */
++  surface3d: boolean
+   missionStart: number
+   durationDays: number
+   selectedTime: number
+@@ -36,6 +38,7 @@ export const DEFAULT_STATE: MissionState = {
+   siteA: 'nobile-rim-2',
+   siteB: 'connecting-ridge',
+   surfaceSite: 'A',
++  surface3d: false,
+   missionStart: Date.parse('2026-11-14T00:00:00Z'),
+   durationDays: 14,
+   selectedTime: Date.parse('2026-11-22T01:00:00Z'),
+@@ -67,6 +70,7 @@ export function toHash(s: MissionState): string {
+     a: s.siteA,
+     b: s.siteB,
+     sv: s.surfaceSite,
++    fp: s.surface3d ? '1' : '',
+     t: iso(s.missionStart),
+     d: String(s.durationDays),
+     at: iso(s.selectedTime),
+@@ -125,6 +129,7 @@ export function fromHash(hash: string, base: MissionState = DEFAULT_STATE): Miss
+     siteA: p.get('a') || base.siteA,
+     siteB: p.get('b') || base.siteB,
+     surfaceSite: p.get('sv') === 'B' ? 'B' : p.get('sv') === 'A' ? 'A' : base.surfaceSite,
++    surface3d: p.get('fp') === '1' ? true : p.get('fp') === '' ? false : base.surface3d,
+     missionStart: time(p.get('t')) ?? base.missionStart,
+     durationDays: d ?? base.durationDays,
+     selectedTime: time(p.get('at')) ?? base.selectedTime,
+diff --git a/web/src/styles/workspaces.css b/web/src/styles/workspaces.css
+index c8bf107..4a856fe 100644
+--- a/web/src/styles/workspaces.css
++++ b/web/src/styles/workspaces.css
+@@ -879,3 +879,49 @@ dialog.summary::backdrop {
+     grid-template-columns: minmax(0, 1fr);
+   }
+ }
++
++/* Milestone 7: first-person surface view */
++.fp-view {
++  width: 100%;
++  height: clamp(320px, 60vh, 680px);
++  overflow: hidden;
++  border: 1px solid var(--c-line);
++  border-radius: var(--r-lg);
++  background: var(--c-sky-night);
++}
++.fp-view canvas {
++  display: block;
++  width: 100%;
++  height: 100%;
++  touch-action: none;
++}
++.fp-compass {
++  margin-block: var(--s-2);
++}
++.fp-profile {
++  width: 100%;
++  height: auto;
++  background: var(--c-sky-night);
++  border-radius: var(--r-sm);
++}
++.fp-h-site {
++  fill: none;
++  stroke: var(--c-terrain-edge);
++  stroke-width: 2;
++}
++.fp-h-planner {
++  fill: none;
++  stroke: var(--c-text-muted);
++  stroke-width: 1.5;
++  stroke-dasharray: 5 4;
++}
++.fp-h-heading {
++  stroke: var(--c-accent);
++  stroke-width: 1;
++}
++.fp-h-sun {
++  fill: var(--c-sun);
++}
++.fp-h-earth {
++  fill: var(--c-earth);
++}
+diff --git a/web/src/workspaces/SurfaceView.tsx b/web/src/workspaces/SurfaceView.tsx
+index ce56f3e..376c41b 100644
+--- a/web/src/workspaces/SurfaceView.tsx
++++ b/web/src/workspaces/SurfaceView.tsx
+@@ -1,4 +1,5 @@
+-import { useMemo, useRef, useState } from 'react'
++import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
++import { loadTerrainIndex, terrainSiteFor, type TerrainIndex } from '../lib/terrainMesh'
+ import { type Sample, SUN_RADIUS_DEG, makeCtx, sampleAt, vectorsAt } from '../lib/analysis'
+ import { fmtAz, fmtDeg, fmtPct, fmtTime } from '../lib/format'
+ import { horizonAt } from '../lib/geometry'
+@@ -10,6 +11,8 @@ import { SiteFacts } from '../components/SitePair'
+ import TimeBar from '../components/TimeBar'
+ import { Chip, useWidth } from '../components/ui'
+ 
++const SurfaceFirstPerson = lazy(() => import('../components/SurfaceFirstPerson'))
++
+ const COMPASS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+ const wrap180 = (d: number) => ((((d + 180) % 360) + 360) % 360) - 180
+ 
+@@ -17,6 +20,20 @@ export default function SurfaceView() {
+   const { s, set, site, data } = useStore()
+   const st = site(s.surfaceSite === 'A' ? s.siteA : s.siteB)
+   const ctx = useMemo(() => makeCtx(st, data.sites.azStepDeg), [st, data])
++  const [terrainIdx, setTerrainIdx] = useState<TerrainIndex | null>(null)
++  useEffect(() => {
++    let live = true
++    loadTerrainIndex().then(
++      (i) => live && setTerrainIdx(i),
++      () => undefined, // without the index the panorama remains fully functional
++    )
++    return () => {
++      live = false
++    }
++  }, [])
++  const terrainIndexed = terrainIdx !== null
++  const terrainInfo = terrainIdx ? terrainSiteFor(terrainIdx.sites, st.id, st.lat, st.lon) : null
++  const show3d = s.surface3d && !!terrainInfo
+   const now = useMemo(() => sampleAt(ctx, data.eph, s.selectedTime), [ctx, data, s.selectedTime])
+   const [view, setView] = useState({ az: now.sunAz, el: 5 })
+   const [fov, setFov] = useState(90)
+@@ -108,164 +125,199 @@ export default function SurfaceView() {
+         </button>
+         <TimeBar />
+ 
+-        <div className="sv-tools">
+-          <button type="button" className="btn" onClick={() => look(now.sunAz, now.sunEl)}>
+-            Look at the Sun
++        <div className="seg" role="radiogroup" aria-label="Surface view mode">
++          <button
++            type="button"
++            role="radio"
++            aria-checked={!show3d}
++            className={!show3d ? 'on' : ''}
++            onClick={() => set({ surface3d: false })}
++          >
++            360° horizon panorama
+           </button>
+-          <button type="button" className="btn" onClick={() => look(now.earthAz, now.earthEl)}>
+-            Look at Earth
++          <button
++            type="button"
++            role="radio"
++            aria-checked={show3d}
++            className={show3d ? 'on' : ''}
++            disabled={!terrainInfo}
++            onClick={() => set({ surface3d: true })}
++          >
++            3D first person (5 m terrain)
+           </button>
+-          <label className="field inline">
+-            <span className="field-label">Field of view</span>
+-            <select value={fov} onChange={(e) => setFov(+e.target.value)}>
+-              {[30, 60, 90, 120, 180].map((f) => (
+-                <option key={f} value={f}>
+-                  {f}°
+-                </option>
+-              ))}
+-            </select>
+-          </label>
+-          <label className="field inline">
+-            <span className="field-label">Vertical scale</span>
+-            <select value={ex} onChange={(e) => setEx(+e.target.value)}>
+-              <option value={1}>True angles (1×)</option>
+-              <option value={3}>Exaggerated 3×</option>
+-              <option value={6}>Exaggerated 6×</option>
+-            </select>
+-          </label>
+         </div>
++        {!terrainInfo && terrainIndexed && (
++          <p className="hint" data-testid="fp-unavailable">
++            No processed NASA 5 m terrain covers {st.name}, so the 3D first-person view is not available here. This 360° panorama uses the
++            LOLA {st.lat <= -75 ? '240 m' : 'regional'} horizon; no terrain detail is invented.
++          </p>
++        )}
++        {show3d && terrainInfo ? (
++          <Suspense fallback={<p role="status">Loading the first-person view…</p>}>
++            <SurfaceFirstPerson site={st} slot={s.surfaceSite} info={terrainInfo} />
++          </Suspense>
++        ) : (
++          <>
++            <div className="sv-tools">
++              <button type="button" className="btn" onClick={() => look(now.sunAz, now.sunEl)}>
++                Look at the Sun
++              </button>
++              <button type="button" className="btn" onClick={() => look(now.earthAz, now.earthEl)}>
++                Look at Earth
++              </button>
++              <label className="field inline">
++                <span className="field-label">Field of view</span>
++                <select value={fov} onChange={(e) => setFov(+e.target.value)}>
++                  {[30, 60, 90, 120, 180].map((f) => (
++                    <option key={f} value={f}>
++                      {f}°
++                    </option>
++                  ))}
++                </select>
++              </label>
++              <label className="field inline">
++                <span className="field-label">Vertical scale</span>
++                <select value={ex} onChange={(e) => setEx(+e.target.value)}>
++                  <option value={1}>True angles (1×)</option>
++                  <option value={3}>Exaggerated 3×</option>
++                  <option value={6}>Exaggerated 6×</option>
++                </select>
++              </label>
++            </div>
+ 
+-        <figure className="sv-frame">
+-          <div className="sv-compass num" aria-hidden>
+-            {ticks.map((a) => {
+-              const n = ((a % 360) + 360) % 360
+-              const major = n % 45 === 0
+-              return (
+-                <span key={a} className={major ? 'major' : ''} style={{ left: `${(((a - view.az) / fov) * 100 + 50).toFixed(2)}%` }}>
+-                  {major ? COMPASS[n / 45] : n % 15 === 0 ? `${n}°` : ''}
+-                </span>
+-              )
+-            })}
+-            <span className="sv-center" />
+-          </div>
+-          <div
+-            ref={box}
+-            className="sv-view"
+-            tabIndex={0}
+-            role="img"
+-            aria-label={summary}
+-            onPointerDown={(e) => {
+-              e.currentTarget.setPointerCapture(e.pointerId)
+-              drag.current = { x: e.clientX, y: e.clientY, az: view.az, el: view.el }
+-            }}
+-            onPointerMove={(e) => {
+-              if (!drag.current) return
+-              const d = drag.current
+-              const az = d.az - (e.clientX - d.x) / pxPerDeg
+-              const el = d.el + (e.clientY - d.y) / pxV
+-              setView({ az: ((az % 360) + 360) % 360, el: Math.max(-10, Math.min(60, el)) })
+-            }}
+-            onPointerUp={() => (drag.current = null)}
+-            onKeyDown={(e) => {
+-              const k: Record<string, [number, number]> = { a: [-5, 0], d: [5, 0], w: [0, 2], s: [0, -2] }
+-              const m = k[e.key.toLowerCase()]
+-              if (m) look(view.az + m[0], view.el + m[1])
+-            }}
+-          >
+-            <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden>
+-              <rect width={W} height={H} className="sv-sky" />
+-              {/* Sun and Earth first, so terrain in front can hide them */}
+-              <g className={sunVis ? '' : 'sv-hidden'}>
+-                <circle cx={sx} cy={sy} r={sunR} className="sv-sun" />
+-              </g>
+-              <g transform={`translate(${exx},${ey}) rotate(${(toSun * 180) / Math.PI})`} className={earthVis ? '' : 'sv-hidden'}>
+-                <circle r={r} className="sv-earth-dark" />
+-                <path d={litPath} className="sv-earth-lit" />
+-              </g>
+-              {terrainMode ? (
+-                <path d={`M0,${H} L${ground.join(' L')} L${W},${H} Z`} className="sv-ground" />
+-              ) : (
+-                <>
+-                  <rect x={0} y={Y(0)} width={W} height={Math.max(0, H - Y(0))} className="sv-ground flat" />
+-                  <polyline points={ground.join(' ')} className="sv-terrain-ghost" />
+-                </>
+-              )}
+-              <line x1={0} x2={W} y1={Y(0)} y2={Y(0)} className="sv-zero" />
+-              {!sunVis && <circle cx={sx} cy={sy} r={sunR} className="sv-wire sun" />}
+-              {!earthVis && <circle cx={exx} cy={ey} r={r} className="sv-wire earth" />}
+-              <text x={sx + sunR + 6} y={sy - sunR - 2} className="sv-label sun">
+-                Sun{sunVis ? '' : ' (hidden)'}
+-              </text>
+-              <text x={exx + r + 6} y={ey + 4} className="sv-label earth">
+-                Earth{earthVis ? '' : ' (hidden)'}
+-              </text>
+-              <text x={8} y={Y(0) - 6} className="sv-note">
+-                0° geometric horizon
+-              </text>
+-              {!terrainMode && (
+-                <text x={8} y={18} className="sv-note">
+-                  Dotted line: real LOLA terrain, ignored by the geometric model
+-                </text>
+-              )}
+-              {ex !== 1 && (
+-                <text x={W - 8} y={18} textAnchor="end" className="sv-note warn">
+-                  Vertical scale exaggerated {ex}×
+-                </text>
+-              )}
+-            </svg>
+-          </div>
+-          <Overview
+-            horizon={st.horizon}
+-            step={data.sites.azStepDeg}
+-            now={now}
+-            viewAz={view.az}
+-            fov={fov}
+-            onPick={(az) => look(az, view.el)}
+-          />
+-          <figcaption>
+-            Drag to look around (or focus the view and use W, A, S, D). The sky is black because the Moon has no atmosphere. Hidden bodies
+-            are drawn as outlines only. Earth’s phase is computed from the Sun–Earth geometry.
+-          </figcaption>
+-        </figure>
++            <figure className="sv-frame">
++              <div className="sv-compass num" aria-hidden>
++                {ticks.map((a) => {
++                  const n = ((a % 360) + 360) % 360
++                  const major = n % 45 === 0
++                  return (
++                    <span key={a} className={major ? 'major' : ''} style={{ left: `${(((a - view.az) / fov) * 100 + 50).toFixed(2)}%` }}>
++                      {major ? COMPASS[n / 45] : n % 15 === 0 ? `${n}°` : ''}
++                    </span>
++                  )
++                })}
++                <span className="sv-center" />
++              </div>
++              <div
++                ref={box}
++                className="sv-view"
++                tabIndex={0}
++                role="img"
++                aria-label={summary}
++                onPointerDown={(e) => {
++                  e.currentTarget.setPointerCapture(e.pointerId)
++                  drag.current = { x: e.clientX, y: e.clientY, az: view.az, el: view.el }
++                }}
++                onPointerMove={(e) => {
++                  if (!drag.current) return
++                  const d = drag.current
++                  const az = d.az - (e.clientX - d.x) / pxPerDeg
++                  const el = d.el + (e.clientY - d.y) / pxV
++                  setView({ az: ((az % 360) + 360) % 360, el: Math.max(-10, Math.min(60, el)) })
++                }}
++                onPointerUp={() => (drag.current = null)}
++                onKeyDown={(e) => {
++                  const k: Record<string, [number, number]> = { a: [-5, 0], d: [5, 0], w: [0, 2], s: [0, -2] }
++                  const m = k[e.key.toLowerCase()]
++                  if (m) look(view.az + m[0], view.el + m[1])
++                }}
++              >
++                <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} aria-hidden>
++                  <rect width={W} height={H} className="sv-sky" />
++                  {/* Sun and Earth first, so terrain in front can hide them */}
++                  <g className={sunVis ? '' : 'sv-hidden'}>
++                    <circle cx={sx} cy={sy} r={sunR} className="sv-sun" />
++                  </g>
++                  <g transform={`translate(${exx},${ey}) rotate(${(toSun * 180) / Math.PI})`} className={earthVis ? '' : 'sv-hidden'}>
++                    <circle r={r} className="sv-earth-dark" />
++                    <path d={litPath} className="sv-earth-lit" />
++                  </g>
++                  {terrainMode ? (
++                    <path d={`M0,${H} L${ground.join(' L')} L${W},${H} Z`} className="sv-ground" />
++                  ) : (
++                    <>
++                      <rect x={0} y={Y(0)} width={W} height={Math.max(0, H - Y(0))} className="sv-ground flat" />
++                      <polyline points={ground.join(' ')} className="sv-terrain-ghost" />
++                    </>
++                  )}
++                  <line x1={0} x2={W} y1={Y(0)} y2={Y(0)} className="sv-zero" />
++                  {!sunVis && <circle cx={sx} cy={sy} r={sunR} className="sv-wire sun" />}
++                  {!earthVis && <circle cx={exx} cy={ey} r={r} className="sv-wire earth" />}
++                  <text x={sx + sunR + 6} y={sy - sunR - 2} className="sv-label sun">
++                    Sun{sunVis ? '' : ' (hidden)'}
++                  </text>
++                  <text x={exx + r + 6} y={ey + 4} className="sv-label earth">
++                    Earth{earthVis ? '' : ' (hidden)'}
++                  </text>
++                  <text x={8} y={Y(0) - 6} className="sv-note">
++                    0° geometric horizon
++                  </text>
++                  {!terrainMode && (
++                    <text x={8} y={18} className="sv-note">
++                      Dotted line: real LOLA terrain, ignored by the geometric model
++                    </text>
++                  )}
++                  {ex !== 1 && (
++                    <text x={W - 8} y={18} textAnchor="end" className="sv-note warn">
++                      Vertical scale exaggerated {ex}×
++                    </text>
++                  )}
++                </svg>
++              </div>
++              <Overview
++                horizon={st.horizon}
++                step={data.sites.azStepDeg}
++                now={now}
++                viewAz={view.az}
++                fov={fov}
++                onPick={(az) => look(az, view.el)}
++              />
++              <figcaption>
++                Drag to look around (or focus the view and use W, A, S, D). The sky is black because the Moon has no atmosphere. Hidden
++                bodies are drawn as outlines only. Earth’s phase is computed from the Sun–Earth geometry.
++              </figcaption>
++            </figure>
+ 
+-        <div className="sv-readout">
+-          <section className="tile">
+-            <div className="tile-label">Sun</div>
+-            <div className="chips">
+-              {sunVis ? (
+-                <Chip kind="sun">{terrainMode && now.sunFrac < 0.999 ? `Sunlit, ${fmtPct(now.sunFrac * 100)} of disc` : 'Sunlit'}</Chip>
+-              ) : (
+-                <Chip kind="none" icon="sun">
+-                  Dark
+-                </Chip>
+-              )}
++            <div className="sv-readout">
++              <section className="tile">
++                <div className="tile-label">Sun</div>
++                <div className="chips">
++                  {sunVis ? (
++                    <Chip kind="sun">{terrainMode && now.sunFrac < 0.999 ? `Sunlit, ${fmtPct(now.sunFrac * 100)} of disc` : 'Sunlit'}</Chip>
++                  ) : (
++                    <Chip kind="none" icon="sun">
++                      Dark
++                    </Chip>
++                  )}
++                </div>
++                <p className="num">
++                  Azimuth {fmtAz(now.sunAz)}, elevation {fmtDeg(now.sunEl)}
++                  {terrainMode && `, terrain ${fmtDeg(now.sunHorizon)}`}
++                </p>
++                <p className="reason">{reason(now, 'sun', s.vis)}</p>
++              </section>
++              <section className="tile">
++                <div className="tile-label">Earth</div>
++                <div className="chips">
++                  {earthVis ? (
++                    <Chip kind="earth">Earth link ✓</Chip>
++                  ) : (
++                    <Chip kind="none" icon="earth">
++                      No Earth link
++                    </Chip>
++                  )}
++                </div>
++                <p className="num">
++                  Azimuth {fmtAz(now.earthAz)}, elevation {fmtDeg(now.earthEl)}
++                  {terrainMode && `, terrain ${fmtDeg(now.earthHorizon)}`}, {fmtPct(earthPhaseNow.illuminated * 100)} of Earth’s disc sunlit
++                  (phase angle {fmtDeg((earthPhaseNow.phaseAngle * 180) / Math.PI)}), apparent diameter{' '}
++                  {(2 * now.earthRadiusDeg).toFixed(2)}°, distance {Math.round(now.earthDistKm).toLocaleString('en')} km
++                </p>
++                <p className="reason">{reason(now, 'earth', s.vis)}</p>
++              </section>
+             </div>
+-            <p className="num">
+-              Azimuth {fmtAz(now.sunAz)}, elevation {fmtDeg(now.sunEl)}
+-              {terrainMode && `, terrain ${fmtDeg(now.sunHorizon)}`}
+-            </p>
+-            <p className="reason">{reason(now, 'sun', s.vis)}</p>
+-          </section>
+-          <section className="tile">
+-            <div className="tile-label">Earth</div>
+-            <div className="chips">
+-              {earthVis ? (
+-                <Chip kind="earth">Earth link ✓</Chip>
+-              ) : (
+-                <Chip kind="none" icon="earth">
+-                  No Earth link
+-                </Chip>
+-              )}
+-            </div>
+-            <p className="num">
+-              Azimuth {fmtAz(now.earthAz)}, elevation {fmtDeg(now.earthEl)}
+-              {terrainMode && `, terrain ${fmtDeg(now.earthHorizon)}`}, {fmtPct(earthPhaseNow.illuminated * 100)} of Earth’s disc sunlit
+-              (phase angle {fmtDeg((earthPhaseNow.phaseAngle * 180) / Math.PI)}), apparent diameter {(2 * now.earthRadiusDeg).toFixed(2)}°,
+-              distance {Math.round(now.earthDistKm).toLocaleString('en')} km
+-            </p>
+-            <p className="reason">{reason(now, 'earth', s.vis)}</p>
+-          </section>
+-        </div>
++          </>
++        )}
+       </section>
+     </div>
+   )
+diff --git a/web/src/workspaces/TerrainExplorer.tsx b/web/src/workspaces/TerrainExplorer.tsx
+index e964382..49ff36c 100644
+--- a/web/src/workspaces/TerrainExplorer.tsx
++++ b/web/src/workspaces/TerrainExplorer.tsx
+@@ -207,6 +207,9 @@ export default function TerrainExplorer() {
+             <button type="button" className="btn" onClick={() => set({ ws: 'surface' })}>
+               Surface view
+             </button>
++            <button type="button" className="btn" onClick={() => set({ ws: 'surface', surface3d: true })}>
++              Enter first-person view
++            </button>
+           </div>
+         )}
+         {error ? (
+-- 
+2.46.0.windows.1
+

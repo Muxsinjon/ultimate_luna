@@ -1,0 +1,16 @@
+{
+  "blobsInspected": 350,
+  "binaryOrArchiveBlobs": 51,
+  "historicalEnvFiles": [
+    {
+      "path": "web/.env",
+      "keys": [
+        "VITE_SITE_URL"
+      ],
+      "object": "a99fb1c70b640b07b3c61dbf926551ed136a022c",
+      "classification": "non-secret public/relative build URL only"
+    }
+  ],
+  "findings": [],
+  "limitations": "Pattern and environment-file audit, not a proof against every possible encoded secret. Binary history inspected by type; backup ZIP member/config audit supplements source history scan."
+}

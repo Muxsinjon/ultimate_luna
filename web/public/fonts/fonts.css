@@ -1,0 +1,37 @@
+/* Original Barlow fonts by Jeremy Tribby, SIL OFL 1.1. See adjacent licenses and SOURCES.md. */
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('./barlow-400.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./barlow-500.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./barlow-600.ttf') format('truetype');
+}
+@font-face {
+  font-family: 'Barlow Semi Condensed';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('./barlow-semi-condensed-600.ttf') format('truetype');
+}
+/* Unbounded by NORD ID, SIL OFL 1.1 (OFL-Unbounded.txt). Display headings only. */
+@font-face {
+  font-family: 'Unbounded';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('./unbounded-500.ttf') format('truetype');
+}

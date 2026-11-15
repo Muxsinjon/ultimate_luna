@@ -1,0 +1,65 @@
+{
+ "generated": "2026-11-15T03:31:18+00:00",
+ "files": {
+  "moon_color.jpg": {
+   "source": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/lroc_color_poles_2k.tif",
+   "sourceSha256": "13b797422e8c4b8607ff2b2623ac3a046a6da0132d567c2d272d92fad7052c4a",
+   "size": [
+    2048,
+    1024
+   ],
+   "credit": "NASA SVS CGI Moon Kit (LRO LROC WAC colour mosaic, poles filled), svs.gsfc.nasa.gov/4720",
+   "bytes": 557279
+  },
+  "moon_height.jpg": {
+   "source": "https://svs.gsfc.nasa.gov/vis/a000000/a004700/a004720/ldem_3_8bit.jpg",
+   "sourceSha256": "6d93f887e7d8bedfe35ab89ba785e5e3ca12381bd092a5e6abe2c707dda8bb98",
+   "size": [
+    1024,
+    512
+   ],
+   "credit": "NASA SVS CGI Moon Kit (LRO LOLA elevation, 8-bit), svs.gsfc.nasa.gov/4720",
+   "bytes": 98350
+  },
+  "stars.jpg": {
+   "source": "https://svs.gsfc.nasa.gov/vis/a000000/a004800/a004851/hiptyc_2020_4k_print.jpg",
+   "sourceSha256": "d80b41a47e4a12e5d4ffebb614e98215bf6cf99ab7705c93eac32dfdf82bc846",
+   "size": [
+    2048,
+    1024
+   ],
+   "credit": "NASA SVS Deep Star Maps 2020 (Hipparcos-2 and Tycho-2 catalogues), svs.gsfc.nasa.gov/4851",
+   "bytes": 408818
+  },
+  "earth.jpg": {
+   "source": "https://svs.gsfc.nasa.gov/vis/a000000/a003600/a003615/flat_earth_Largest_still.0330.jpg",
+   "sourceSha256": "5ea6b68a4412421cae11711ae4fec1a7b1f2dbd7265c0c3004d487a03c43be9a",
+   "size": [
+    4096,
+    2048
+   ],
+   "credit": "NASA SVS 3615 Earth with clouds (Greg Shirah, NASA GSFC Scientific Visualization Studio), svs.gsfc.nasa.gov/3615",
+   "bytes": 1472960
+  },
+  "earth_night.jpg": {
+   "source": "https://svs.gsfc.nasa.gov/vis/a030000/a030000/a030028/earthatnight2012_print.jpg",
+   "sourceSha256": "18ee3bd634967a2cacbe9513ba42ff56fe382b3b43604c4cb7e5935309a3ea5d",
+   "size": [
+    2048,
+    1024
+   ],
+   "credit": "NASA Earth Observatory / SVS Black Marble 2012 (Suomi NPP VIIRS city lights), svs.gsfc.nasa.gov/30028",
+   "bytes": 116130
+  },
+  "sun.jpg": {
+   "source": "https://sdo.gsfc.nasa.gov/assets/img/latest/latest_1024_0304.jpg",
+   "sourceSha256": "4241c0af0e4938c9cc075282da7ced446369ddc477f0801a10f53759b0eef6be",
+   "size": [
+    1024,
+    1024
+   ],
+   "credit": "NASA/SDO and the AIA science team (AIA 304 \u00c5, retrieved image)",
+   "bytes": 160226
+  }
+ }
+}

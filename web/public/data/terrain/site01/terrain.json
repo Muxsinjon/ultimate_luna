@@ -1,0 +1,219 @@
+{
+  "version": 1,
+  "width": 401,
+  "height": 401,
+  "x0": -11047.5,
+  "y0": -8237.5,
+  "dx": 20.0,
+  "dy": -20.0,
+  "radiusM": 1737400,
+  "origin": {
+    "lat": -89.53432,
+    "lon": 209.94767
+  },
+  "projection": "south-polar-stereographic",
+  "frame": "MOON_ME / DE421 (PGDA)",
+  "heightDatum": "metres above the 1737400 m lunar reference sphere",
+  "sourceResolutionM": 5,
+  "sources": {
+    "surf": {
+      "url": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site01/Site01_final_adj_5mpp_surf.tif",
+      "file": "Site01_final_adj_5mpp_surf.tif",
+      "sha256": "3ba7b97cb00a2bcf21189c3aeb535f65afc21207154ab9f0d43c5bdc1f7e747e",
+      "bytes": 40980810,
+      "metadata": {
+        "width": 3200,
+        "height": 3200,
+        "dtype": "float32",
+        "resolutionM": [
+          5.0,
+          5.0
+        ],
+        "boundsM": [
+          -19000.0,
+          -20000.0,
+          -3000.0,
+          -4000.0
+        ],
+        "transform": [
+          5.0,
+          0.0,
+          -19000.0,
+          0.0,
+          -5.0,
+          -4000.0
+        ],
+        "crsWkt": "PROJCS[\"unnamed\",GEOGCS[\"unnamed ellipse\",DATUM[\"unknown\",SPHEROID[\"unnamed\",1737400,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-90],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",NORTH],AXIS[\"Northing\",NORTH]]",
+        "noData": "NaN",
+        "unitsMetadata": [
+          null
+        ],
+        "scales": [
+          1.0
+        ],
+        "offsets": [
+          0.0
+        ],
+        "tags": {
+          "NC_GLOBAL#Conventions": "COARDS, CF-1.5",
+          "NC_GLOBAL#GMT_version": "5.4.5 [64-bit]",
+          "NC_GLOBAL#history": "xyz2grd -bi3 -I5 -R-1.90000000000e+04/-3.00000000000e+03/-2.00000000000e+04/-4.00000000000e+03 -Gtest.grd -r",
+          "NC_GLOBAL#node_offset": "1",
+          "x#actual_range": "{-19000,-3000}",
+          "x#long_name": "x",
+          "y#actual_range": "{-20000,-4000}",
+          "y#long_name": "y",
+          "z#actual_range": "{-523.1834106445312,1959.496215820312}",
+          "z#long_name": "z",
+          "z#_FillValue": "nan",
+          "AREA_OR_POINT": "Area"
+        }
+      }
+    },
+    "toterr": {
+      "url": "https://pgda.gsfc.nasa.gov/data/LOLA_5mpp/Site01/Site01_final_adj_5mpp_toterr.tif",
+      "file": "Site01_final_adj_5mpp_toterr.tif",
+      "sha256": "cf2cf52f52d2aa51e60d058010d10b0ebfb1d3e920f5a2b9a46eb6c51054ab1c",
+      "bytes": 40980810,
+      "metadata": {
+        "width": 3200,
+        "height": 3200,
+        "dtype": "float32",
+        "resolutionM": [
+          5.0,
+          5.0
+        ],
+        "boundsM": [
+          -19000.0,
+          -20000.0,
+          -3000.0,
+          -4000.0
+        ],
+        "transform": [
+          5.0,
+          0.0,
+          -19000.0,
+          0.0,
+          -5.0,
+          -4000.0
+        ],
+        "crsWkt": "PROJCS[\"unnamed\",GEOGCS[\"unnamed ellipse\",DATUM[\"unknown\",SPHEROID[\"unnamed\",1737400,0]],PRIMEM[\"Greenwich\",0],UNIT[\"degree\",0.0174532925199433,AUTHORITY[\"EPSG\",\"9122\"]]],PROJECTION[\"Polar_Stereographic\"],PARAMETER[\"latitude_of_origin\",-90],PARAMETER[\"central_meridian\",0],PARAMETER[\"false_easting\",0],PARAMETER[\"false_northing\",0],UNIT[\"metre\",1],AXIS[\"Easting\",NORTH],AXIS[\"Northing\",NORTH]]",
+        "noData": "NaN",
+        "unitsMetadata": [
+          null
+        ],
+        "scales": [
+          1.0
+        ],
+        "offsets": [
+          0.0
+        ],
+        "tags": {
+          "NC_GLOBAL#Conventions": "COARDS, CF-1.5",
+          "NC_GLOBAL#GMT_version": "5.4.5 [64-bit]",
+          "NC_GLOBAL#history": "xyz2grd -bi3 -I5 -R-1.90000000000e+04/-3.00000000000e+03/-2.00000000000e+04/-4.00000000000e+03 -Gtest.grd -r",
+          "NC_GLOBAL#node_offset": "1",
+          "x#actual_range": "{-19000,-3000}",
+          "x#long_name": "x",
+          "y#actual_range": "{-20000,-4000}",
+          "y#long_name": "y",
+          "z#actual_range": "{0.0615781843662262,5.582818508148193}",
+          "z#long_name": "z",
+          "z#_FillValue": "nan",
+          "AREA_OR_POINT": "Area"
+        }
+      }
+    }
+  },
+  "assets": {
+    "surf": {
+      "file": "elevation.f32",
+      "sha256": "5fd06206673d3bd7d4c078d0b2b20e491ee4b3783bc5193f43dfd496cb857acc",
+      "validSamples": 160801,
+      "min": 860.3732299804688,
+      "max": 1949.6220703125,
+      "median": 1424.5975341796875
+    },
+    "toterr": {
+      "file": "uncertainty.f32",
+      "sha256": "a66809905e1c5149ab60ce1ee072bc0eb7bae5c23e0c12f163c5d4bd1a6af353",
+      "validSamples": 160801,
+      "min": 0.06525006890296936,
+      "max": 3.1758127212524414,
+      "median": 0.3449040651321411
+    }
+  },
+  "imagery": {
+    "file": "lroc-wac.jpg",
+    "sha256": "85adc21526194901ff2ba17b13ab3eecda34905adb5bb6110fbda386e71913b6",
+    "title": "LROC WAC global mosaic (NASA Trek, 303 pixels/degree)",
+    "url": "https://trek.nasa.gov/tiles/Moon/EQ/LRO_WAC_Mosaic_Global_303ppd_v02/1.0.0/WMTSCapabilities.xml",
+    "provenance": "imagery-provenance.json",
+    "note": "Real WAC context imagery, ~100 m nominal source, with dark polar areas. Source metadata quotes 12\u2013300 m absolute accuracy. Map-projected onto the DEM; no independent landmark residual or subpixel co-registration measured. Observed shadows are baked into the mosaic and do not reflect mission time."
+  },
+  "uncertaintyNote": "PGDA total Z RMS error, including interpolation. About 90% of native 5 m pixels are interpolated. Pixel spacing is not accuracy.",
+  "decimationResidualM": {
+    "against": "native 5 m DEM samples, not independent ground truth",
+    "rms": 0.2526011071367908,
+    "p95Abs": 0.512451171875,
+    "maxAbs": 8.18646240234375,
+    "samples": 2563201
+  },
+  "alignment": {
+    "checkpoints": [
+      {
+        "row": 0,
+        "col": 0,
+        "lat": -89.5455488479455,
+        "lon": 233.2901750490546,
+        "elevationM": 1034.4217529296875,
+        "projectionErrorM": 1.114171383080632e-08
+      },
+      {
+        "row": 0,
+        "col": 400,
+        "lat": -89.71035101085086,
+        "lon": 200.30217944992452,
+        "elevationM": 1656.1893310546875,
+        "projectionErrorM": 1.6623973446820635e-08
+      },
+      {
+        "row": 200,
+        "col": 200,
+        "lat": -89.53429728670451,
+        "lon": 209.93737204778682,
+        "elevationM": 1653.2899169921875,
+        "projectionErrorM": 5.366799615873252e-09
+      },
+      {
+        "row": 400,
+        "col": 0,
+        "lat": -89.35234298740554,
+        "lon": 214.2301769772683,
+        "elevationM": 1518.6680908203125,
+        "projectionErrorM": 8.662097441768046e-09
+      },
+      {
+        "row": 400,
+        "col": 400,
+        "lat": -89.45517622604832,
+        "lon": 190.62977472361538,
+        "elevationM": 860.3732299804688,
+        "projectionErrorM": 1.8981799384932648e-09
+      },
+      {
+        "row": 173,
+        "col": 279,
+        "lat": -89.57418470129248,
+        "lon": 205.05174247530778,
+        "elevationM": 1328.923828125,
+        "projectionErrorM": 9.098606452003842e-09
+      }
+    ],
+    "siteX": -7049.355538480268,
+    "siteY": -12235.636339553808,
+    "siteSourceRow": 1647,
+    "siteSourceCol": 2390,
+    "siteNativeElevationM": 1653.2899169921875
+  }
+}

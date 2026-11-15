@@ -1,0 +1,113 @@
+/* "Terminator" design tokens: single source of truth. See docs/DESIGN_SYSTEM.md */
+:root,
+:root[data-theme='dark'] {
+  --c-bg: #05070d;
+  --c-surface: #0b1020;
+  --c-raised: #131b2e;
+  --c-line: #22304a;
+  --c-line-soft: #161f33;
+  --c-text: #ece8df;
+  --c-text-muted: #a3a097;
+  /* moonlight: the photographic Moon's warm off-white; Sun gold and Earth blue keep their meanings */
+  --c-accent: #e9e2d0;
+  --c-site-a: #f4f1ea;
+  --c-site-b: #e08ac8;
+  --c-sun: #f0a830;
+  --c-sun-tint: rgb(240 168 48 / 0.16);
+  --c-earth: #5ab0f0;
+  --c-earth-tint: rgb(90 176 240 / 0.16);
+  --c-both: #3fc7a4;
+  --c-both-tint: rgb(63 199 164 / 0.16);
+  --c-none: #7a808b;
+  --c-none-tint: rgb(122 128 139 / 0.16);
+  --c-warn: #f07f3c;
+  --c-error: #ef5a5a;
+  --c-terrain-top: #5e5a53;
+  --c-terrain-bottom: #2e2c29;
+  --c-terrain-edge: #9a948a;
+  --c-sky-day: #05070b;
+  --c-sky-night: #05070b;
+  --c-grid: rgb(232 237 245 / 0.08);
+  --c-grid-strong: rgb(232 237 245 / 0.3);
+  --c-focus: #e9e2d0;
+  --c-on-primary: #0b0d12;
+  --c-shimmer: rgb(255 255 255 / 0.05);
+  --e-1: 0 6px 24px rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  --c-bg: #e7ecf3;
+  --c-surface: #f7f9fc;
+  --c-raised: #ffffff;
+  --c-line: #c6cfdc;
+  --c-line-soft: #dce3ec;
+  --c-text: #111827;
+  --c-text-muted: #4f5b6d;
+  --c-accent: #0e7490;
+  --c-site-a: #1f2937;
+  --c-site-b: #a3367f;
+  --c-sun: #9a5a00;
+  --c-sun-tint: rgb(214 140 20 / 0.16);
+  --c-earth: #0a65a8;
+  --c-earth-tint: rgb(10 101 168 / 0.12);
+  --c-both: #08765f;
+  --c-both-tint: rgb(8 118 95 / 0.12);
+  --c-none: #6b717b;
+  --c-none-tint: rgb(107 113 123 / 0.12);
+  --c-warn: #b0450d;
+  --c-error: #be2a2a;
+  --c-terrain-top: #b9b3a8;
+  --c-terrain-bottom: #8d867a;
+  --c-terrain-edge: #6f685d;
+  --c-sky-day: #05070b;
+  --c-sky-night: #05070b;
+  --c-grid: rgb(17 24 39 / 0.08);
+  --c-grid-strong: rgb(17 24 39 / 0.3);
+  --c-focus: #0e7490;
+  --c-on-primary: #f7f9fc;
+  --c-shimmer: rgb(0 0 0 / 0.04);
+  --e-1: 0 6px 24px rgb(20 30 40 / 0.14);
+  color-scheme: light;
+}
+
+:root {
+  --font-ui: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Barlow Semi Condensed', 'Barlow', system-ui, sans-serif;
+  /* wide geometric display face for page titles and the story (self-hosted, OFL) */
+  --font-hero: 'Unbounded', 'Barlow Semi Condensed', system-ui, sans-serif;
+
+  /* type scale, minor third, base 16 */
+  --fs-0: 12px;
+  --fs-1: 14px;
+  --fs-2: 16px;
+  --fs-3: 19px;
+  --fs-4: 23px;
+  --fs-5: 28px;
+  --fs-6: 34px;
+
+  /* 8 px spacing grid */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 16px;
+  --r-pill: 999px;
+
+  --t-fast: 150ms;
+  --t-base: 220ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 0ms;
+    --t-base: 0ms;
+  }
+}

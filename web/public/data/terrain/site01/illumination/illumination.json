@@ -1,0 +1,47 @@
+{
+ "version": 1,
+ "siteId": "site01",
+ "grid": 21,
+ "gridStepVertices": 20,
+ "azStepDeg": 0.5,
+ "azCount": 720,
+ "observerHeightM": 2.0,
+ "farElQuantumDeg": 0.01,
+ "farDistQuantumKm": 0.1,
+ "maxDistanceKm": 250.0,
+ "farTerrain": "LOLA LDEM_75S_240M (same DEM as the planner horizon masks), samples outside the crop only",
+ "assets": {
+  "farEl": {
+   "file": "far_el.i16",
+   "sha256": "7715cdc62b83defcaddbfbfec18fe4bd5c233f9198b18f1f4ae158945b312132"
+  },
+  "farDist": {
+   "file": "far_d.u16",
+   "sha256": "0fe1d6c60d0ed01aeb0a85c5e97e692e34dd18284a99401b689aa334793c9e72"
+  },
+  "psr": {
+   "file": "psr.u8",
+   "sha256": "b0ffa9802b5af8c552f4c1a3d31d7785090fd161ecb8ec3b1efb877de447f57c",
+   "width": 401,
+   "height": 401,
+   "source": {
+    "url": "https://pgda.gsfc.nasa.gov/data/LOLA_20mpp/LPSR_80S_20MPP_ADJ.TIF",
+    "crs": "+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +x_0=0 +y_0=0 +R=1737400 +units=m +no_defs=True",
+    "resolutionM": [
+     20.0,
+     20.0
+    ],
+    "window": [
+     14645,
+     15609,
+     404,
+     404
+    ],
+    "windowSha256": "fd2438157ca3b77ffa854a4b8192911daac00269609233b9f82047c3bddc8ebe",
+    "dtype": "float32"
+   },
+   "note": "NASA PGDA product 90 (Barker et al.), 20 m, MOON_ME/DE421, sampled at mesh vertices. Static context."
+  }
+ },
+ "psrFraction": 0.05504940889671084
+}

@@ -1,0 +1,1399 @@
+From 3bee20d47a381f18191593e51e2a7d34664acc3a Mon Sep 17 00:00:00 2001
+From: Muxsinjon <Muxsinjon@users.noreply.github.com>
+Date: Sun, 15 Nov 2026 02:00:35 +0500
+Subject: [PATCH] Milestone 6: explainable mission-date recommendation
+
+- Audited and kept the existing finder (search, thresholds, statuses,
+  coverage handling, explanations, hand-offs)
+- Hard terrain requirement on processed 5 m sites (Milestone 2-3
+  estimators); unknown or partial terrain is insufficient data, never a pass
+- Soft preference weights with a visible normalized score and per-metric
+  contributions; default weights reproduce the previous ranking exactly
+- Deterministic tie-breaks, URL persistence, downloadable JSON scenario,
+  "Open in 3D terrain" hand-off
+- Tests: finderRanking (14), state round-trip, two-site e2e on real data
+  with independent numpy terrain count and ranking re-derivation
+- Docs: MILESTONE6_ACCEPTANCE.md, PROJECT_STATUS, DATA_SOURCES, AI_USAGE,
+  README, CLAUDE.md
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ CLAUDE.md                            |   2 +-
+ README.md                            |   6 +-
+ docs/AI_USAGE.md                     |   2 +
+ docs/DATA_SOURCES.md                 |   9 +
+ docs/MILESTONE6_ACCEPTANCE.md        | 109 +++++++++++
+ docs/PROJECT_STATUS.md               |  19 +-
+ milestones/README.md                 |   3 +-
+ tests/e2e/finder_test.py             | 124 +++++++++++++
+ web/src/lib/finder.ts                | 163 +++++++++++++++-
+ web/src/lib/finderRanking.test.ts    | 193 +++++++++++++++++++
+ web/src/lib/state.test.ts            |  18 +-
+ web/src/lib/state.ts                 |  38 +++-
+ web/src/lib/terrainCompare.ts        |  26 +++
+ web/src/workspaces/MissionFinder.tsx | 266 +++++++++++++++++++++++++--
+ 14 files changed, 952 insertions(+), 26 deletions(-)
+ create mode 100644 docs/MILESTONE6_ACCEPTANCE.md
+ create mode 100644 tests/e2e/finder_test.py
+ create mode 100644 web/src/lib/finderRanking.test.ts
+
+diff --git a/CLAUDE.md b/CLAUDE.md
+index 5af083e..d11df71 100644
+--- a/CLAUDE.md
++++ b/CLAUDE.md
+@@ -47,7 +47,7 @@ There is also a welcome screen, a guided demo and a mission summary export. **Pl
+ - `pgda_sun.bin`, `pgda_earth.bin`: Uint8 on the polar grid. Values are % of time visible; 255 means no data.
+ - `terrain/<site>/illumination/` (Milestone 5): `illumination.json` plus `far_el.i16` (Int16 LE, 0.01°) and `far_d.u16` (Uint16 LE, 0.1 km), 21 × 21 × 720 far-field horizons outside the crop; `psr.u8` (401 × 401, 1 PSR / 0 / 255 no data, NASA PGDA product 90, static context). Browser algorithm: `lib/terrainShadow.ts`.
+ - `validation.json`: `{ period, worstElevationErrorDeg, sites[], illumination{}, missions[] }`.
+-- Mission Window Finder: `lib/finder.ts`. Candidate statuses are meets / partial (at most half of the active requirements fail) / fails / insufficient. Ranking: status, then fewer failures, then joint %, then shorter darkness, then earlier start. Explanations are generated only from computed numbers (`checkSentence`).
++- Mission Window Finder: `lib/finder.ts`. Candidate statuses are meets / partial (at most half of the active requirements fail) / fails / insufficient (outside data, or a required metric such as terrain unknown). Ranking: status, then fewer failures, then preference score (Σ w·n / Σ w; default weights = joint % only), then shorter darkness, then earlier start, then site id. The terrain requirement applies only to processed 5 m sites; unknown terrain is never a pass. Explanations are generated only from computed numbers (`checkSentence`).
+ - In-app time series: `Sample` in `web/src/lib/analysis.ts`. It has az/el, terrain horizon, margin and disc fraction for both the Sun and Earth, at the time `t` (ms UTC).
+ 
+ ## Code conventions
+diff --git a/README.md b/README.md
+index d8f79ca..ad0e376 100644
+--- a/README.md
++++ b/README.md
+@@ -184,10 +184,14 @@ Sun and Earth directions come from JPL Horizons (DE441) in the Moon's body-fixed
+ 
+ On the 5 m terrain sites, **3D Terrain** can show where the Sun and Earth are visible at the selected time, computed from the site's own terrain plus LOLA terrain out to 250 km. NASA's permanently shadowed regions are available as a static layer. Comparisons now separate full-disc, partial-disc and disc-weighted sunlight. Earth line of sight is geometric and is not a communication guarantee. See the [acceptance report](docs/MILESTONE5_ACCEPTANCE.md).
+ 
++## Explainable mission-date recommendation (Milestone 6)
++
++The **Mission Window Finder** separates hard requirements (sunlight, Earth visibility, darkness, blackout and, on the 5 m sites, a terrain footprint) from soft preferences (weights). Every ranked window shows its score breakdown. Sites without processed terrain are marked insufficient data rather than passing. The search and its results download as a reproducible JSON scenario. See the [acceptance report](docs/MILESTONE6_ACCEPTANCE.md).
++
+ ## Development repository and milestone recovery
+ 
+ The complete current development project is now maintained in [Muxsinjon/new_luna](https://github.com/Muxsinjon/new_luna). The original `Muxsinjon/lunawindow` repository is retained unchanged. All application source, scientific assets, tests and pipeline scripts are at this repository's root; this is not just an archive repository.
+ 
+-Milestones 1–5 have [separate recovery files](milestones/README.md) and separate acceptance reports in `docs/`. The historical Milestone 1 backup ZIP and its checksum remain at the root; its old README is preserved in `docs/archive/NEW_LUNA_BACKUP_README.md`.
++Milestones 1–6 have [separate recovery files](milestones/README.md) and separate acceptance reports in `docs/`. The historical Milestone 1 backup ZIP and its checksum remain at the root; its old README is preserved in `docs/archive/NEW_LUNA_BACKUP_README.md`.
+ 
+ See [migration and development setup](docs/NEW_LUNA_MIGRATION.md) for audited contents and future Codex/Claude sessions. GitHub Pages deployment is manual-only; normal pushes do not deploy the site.
+diff --git a/docs/AI_USAGE.md b/docs/AI_USAGE.md
+index cef3691..968b46b 100644
+--- a/docs/AI_USAGE.md
++++ b/docs/AI_USAGE.md
+@@ -51,3 +51,5 @@ This log supports the Space Apps "Use of Super Intelligence (SI)" disclosure.
+ | 2026-11-15 | Milestone 4 astronomy audit: verified the existing Horizons pipeline and geometry; built an independent Horizons topocentric reference (9 sites × 40 epochs, Sun and Earth, phase and size); replaced linear with cubic ephemeris upsampling; moved Earth phase into a tested pure function with Sun parallax; added Sun and Earth rays, a readout and a time bar to the 3D terrain views; corrected the coverage-end wording; added Python, JS and e2e tests and docs. | `pipeline/validate_astronomy.py`, `pipeline/test_validate_astronomy.py`, `web/src/lib/{ephemeris.ts,ephemeris.test.ts,astronomy.test.ts,analysis.ts,terrainMesh.ts}`, `web/src/lib/physics/earthPhase.ts`, `web/src/lib/__fixtures__/horizons_topocentric.json`, `web/src/components/{SkyReadout,TerrainCanvas,TerrainComparePane,About,MissionSummary}.tsx`, `web/src/workspaces/{TerrainExplorer,SurfaceView}.tsx`, `tests/e2e/astronomy_test.py`, `docs/*`, `CLAUDE.md` |
+ 
+ | 2026-11-15 | Milestone 5 terrain-aware sunlight and Earth line of sight: audited the existing horizon masks and visibility models; added time-dependent shadow and Earth line-of-sight layers on the 3D terrain sites (far-field horizon grids, PGDA PSR sampling), independent native 5 m reference, PGDA AVGVISIB/PSR comparison, hourly-sampling bound, full/partial/disc-weighted sunlight metrics, UI disclaimers, tests and docs. | `pipeline/{illumination_sites,sampling_bound,test_illumination_sites}.py`, `web/public/data/terrain/*/illumination/*`, `web/src/lib/{terrainShadow*,sunlight.test.ts,analysis.ts,terrainCache.ts,terrainMesh.ts}`, `web/src/lib/__fixtures__/shadow_reference.json`, `web/src/components/{LightingPanel.tsx,lightingOverlay.ts,TerrainComparePane.tsx,CompareTable.tsx,HazardPanel.tsx,About.tsx}`, `web/src/workspaces/TerrainExplorer.tsx`, `tests/e2e/{lighting_test,smoke_test}.py`, `docs/*` |
++
++| 2026-11-15 | Milestone 6 Mission Window Finder audit and gaps: hard terrain requirement on processed 5 m sites (unknown terrain is insufficient), soft preference weights with a visible score and breakdown, deterministic ties, URL state, downloadable scenario, 3D terrain hand-off; unit and end-to-end tests with independent re-derivation; docs. | `web/src/lib/{finder.ts,finderRanking.test.ts,state.ts,state.test.ts,terrainCompare.ts}`, `web/src/workspaces/MissionFinder.tsx`, `tests/e2e/finder_test.py`, `docs/*` |
+diff --git a/docs/DATA_SOURCES.md b/docs/DATA_SOURCES.md
+index c894276..509a4f8 100644
+--- a/docs/DATA_SOURCES.md
++++ b/docs/DATA_SOURCES.md
+@@ -2,6 +2,15 @@
+ 
+ Updated 2026-11-14. Reference directory: user-supplied `Lunar_Landing_Navigator_NASA_JPL_Data_Sources.docx` (17 categories). That document is a discovery directory, not verification. Status below distinguishes existing integration, newly verified products and future/uninspected collections. No remote publication is implied.
+ 
++## Milestone 6 finder records
++
++No new external data. The finder combines existing, attributed inputs:
++- JPL Horizons geometry (Milestone 4);
++- LOLA horizon masks (Milestone 5);
++- PGDA product 78 5 m slope and roughness (Milestones 2–3), only at the processed sites and never transferred between sites.
++
++The downloaded scenario JSON lists these sources and the method.
++
+ ## Milestone 5 illumination records
+ 
+ | Record | Product / file | Use | Notes |
+diff --git a/docs/MILESTONE6_ACCEPTANCE.md b/docs/MILESTONE6_ACCEPTANCE.md
+new file mode 100644
+index 0000000..5c35203
+--- /dev/null
++++ b/docs/MILESTONE6_ACCEPTANCE.md
+@@ -0,0 +1,109 @@
++# Milestone 6: explainable mission-date recommendation
++
++Date: 2026-11-15. Branch `milestone-6`, based on Milestone 5 (`ac22e2f`). The existing Mission Window Finder was audited first. It is extended, not duplicated.
++
++## Already present vs added
++
++| Capability | Status | Where |
++|---|---|---|
++| Candidate search across start times, hourly half-open samples, prefix sums | **Verified existing** | `lib/finder.ts` (`prepare`, `metricsAt`, `search`) |
++| Requirements: min sunlight %, min Earth %, optional min joint %, max darkness, max blackout | **Verified existing** | `checksFor`, exact `>=` / `<=` boundaries (tested) |
++| Statuses: meets / partially meets / does not meet / insufficient data | **Verified existing** | `statusFor` |
++| No extrapolation outside ephemeris coverage | **Verified existing** | Candidates leaving the data are "insufficient data" (now with a stated reason) |
++| "No candidate satisfies all requirements" message with suggested changes | **Verified existing** | `MissionFinder.tsx` |
++| "Why this window?" built only from computed numbers, overview grid, filters and sorts | **Verified existing** | `MissionFinder.tsx` |
++| Hand-off to Explore and Compare, Surface View, mission summary | **Verified existing** | Shared `MissionState` |
++| **Terrain hard requirement** (max slope, max roughness, footprint radius, share of footprint meeting both) | **Added** | `TerrainReq`, `terrainCheck` |
++| **Unknown terrain is insufficient data**, with the reason; terrain is never reused between sites | **Added** | `NO_TERRAIN`, `terrainScreenFrom` |
++| **Soft preferences** (weights) separated from hard requirements, with a visible normalised score and per-metric contributions | **Added** | `Weights`, `scoreFor`, score column, breakdown table |
++| Deterministic tie-breaking (site id last) | **Added** | `rank` |
++| Terrain requirement and weights in the shareable URL (old links still parse) | **Added** | `state.ts` (`tr`, `w`) |
++| Downloadable reproducible scenario (inputs, method, sources, every candidate's numbers) | **Added** | "Download scenario and results (JSON)" |
++| Hand-off to the 3D terrain view | **Added** | "Open in 3D terrain" |
++
++## Terrain screening (hard requirement)
++
++The finder reuses the accepted Milestone 2–3 estimators on the NASA PGDA product 78 5 m DEMs:
++
++- **Slope:** 3 × 3 OLS (15 m support).
++- **Roughness:** 5 × 5 detrended RMS (25 m support).
++- **Footprint:** sample-centre circle with local scale correction, centred on the site location.
++
++A site passes when the share of valid native samples meeting both limits is at least the user's minimum.
++
++- **Which sites can be screened:** only sites inside a processed crop (Connecting Ridge, Shackleton Rim, Nobile Rim 1, and custom points inside those crops). Every other site is **insufficient data**, with the reason "No processed 5 m terrain covers …".
++- **Incomplete footprints:** a footprint with any unavailable sample is unknown. Missing data is never converted to a pass.
++- **Default limits:** 10°, 0.3 m, 100 m, 90 %. These are illustrative and labelled as not NASA standards.
++
++## Ranking formula
++
++Ranking is lexicographic; preferences never cross a status boundary:
++
++1. Status: meets, then partially meets, then does not meet, then insufficient data.
++2. Fewer failed hard requirements.
++3. Higher **preference score** (below).
++4. Shorter longest darkness.
++5. Earlier start, then site id.
++
++The preference score is:
++
++```
++score = Σ wₖ · nₖ / Σ wₖ   (over preferences with wₖ > 0 and a known value)
++n_sun = sun % / 100      n_earth = Earth % / 100      n_joint = joint % / 100
++n_dark = 1 − longest darkness / mission length      n_blackout = 1 − longest blackout / mission length
++n_terrain = footprint share meeting both limits / 100   (excluded when unknown, never counted as 0 or 1)
++```
++
++The default weights (joint 1, others 0) reproduce the pre-Milestone-6 ranking exactly. A unit test compares against the old comparator, and the original finder tests pass unchanged. Each candidate's breakdown table lists the weight, normalised value and contribution, and the contributions sum to the score.
++
++## Tested scenarios
++
++**Unit tests** (`finderRanking.test.ts`, 14 tests; `state.test.ts`, 7 tests):
++- the exact terrain boundary;
++- missing terrain, which makes a site insufficient and sorts it last;
++- partial footprint coverage, which is unknown;
++- a terrain failure counting as a failed requirement;
++- no feasible window, where nothing is marked as meeting;
++- weighted-mean arithmetic and contributions;
++- unknown terrain excluded from the score;
++- no weights, which gives no score;
++- default weights equal to the old order;
++- changed weights, which leave status and failure counts untouched;
++- deterministic ties;
++- an independent re-derivation of the ranking from the reported metrics;
++- out-of-range starts with a reason, and an exact-fit final window;
++- the blackout limit exactly at and one hour over;
++- URL round-trip, old links and invalid values.
++
++**End to end** (`tests/e2e/finder_test.py`, real NASA/JPL data). The scenario compares Shackleton Rim (Site04 DEM centre) with Nobile Rim 1 (Site06 DEM centre). It covers 14-day missions starting 1–15 January 2027 every 6 h, with an illustrative terrain requirement of ≤ 20° slope, ≤ 1 m roughness, a 100 m footprint and ≥ 90 % share.
++
++- **Terrain screen vs an independent numpy count on the shipped 5 m layers:** Shackleton **0.0 %** (crater wall, median slope 32°) and Nobile **99.5 %**. The app's values match.
++- **Terrain decides the result:** Shackleton never meets, while Nobile has windows that meet every requirement.
++- **Score check:** the score breakdown sums to the displayed score.
++- **Downloaded scenario (114 candidates):** every score is re-computed from its reported components. "Meets" holds exactly when all checks pass. The ranking re-sorts identically under the documented rule.
++- **Hand-off:** "Open in 3D terrain" moves the shared state to the 3D view for Nobile Rim 1, with the sky readout at the window start.
++- **All sites:** with all 19 listed sites, Apollo 11 and the other sites without 5 m terrain are "Insufficient data", with terrain "Unknown" and the stated reason.
++
++**Regression:**
++- 116 unit tests and 28 Python tests pass.
++- The smoke (including the original finder flow), terrain, hazard, terrain compare, astronomy and lighting e2e suites pass.
++- `tsc`, ESLint, Prettier and the build are clean.
++
++The astronomy e2e once hit a 30 s timeout while all suites ran back to back on the software renderer. It passed on rerun, and no code change was involved.
++
++## Sources
++
++| Source | Use |
++|---|---|
++| NASA/JPL Horizons (DE441) | Sun and Earth geometry (Milestone 4) |
++| LRO LOLA LDEM_75S_240M / LDEM_16 (PDS) | Horizon masks (Milestone 5) |
++| NASA GSFC PGDA product 78 (Barker et al. 2021) | 5 m terrain for the screen (Milestones 2–3) |
++
++No criterion is presented as an official mission standard.
++
++## Remaining uncertainties
++
++- **Sampling:** hourly sampling makes durations whole hours (±1 h). Milestone 5 bounds the sub-hour misses.
++- **Terrain coverage:** terrain can only be screened at the three processed 5 m sites. The terrain screen uses the site location as the footprint centre; picking a different point in the 3D view is not yet fed back into the finder.
++- **Terrain inputs:** the 5 m DEMs are about 90 % interpolated, and slope and roughness carry no propagated uncertainty.
++- **Scope of "visibility":** line of sight does not guarantee power or communication.
+diff --git a/docs/PROJECT_STATUS.md b/docs/PROJECT_STATUS.md
+index ef05724..351448c 100644
+--- a/docs/PROJECT_STATUS.md
++++ b/docs/PROJECT_STATUS.md
+@@ -1,8 +1,23 @@
+ # LunaWindow project status
+ 
+-Updated 2026-11-15. Branch `milestone-5` on `Muxsinjon/new_luna`, based on Milestone 4 (`09f42c0`). Milestone 5 is complete and pushed; Milestones 6–9 have not started.
++Updated 2026-11-15. Branch `milestone-6` on `Muxsinjon/new_luna`, based on Milestone 5 (`ac22e2f`). Milestone 6 is complete and pushed; Milestones 7–9 have not started.
+ 
+-## Milestone 5: completed (audit, then gaps only)
++## Milestone 6: completed (audit, then gaps only)
++
++- **Verified existing:** finder search, thresholds, statuses, coverage handling, explanations, overview grid and hand-offs.
++- **Added:**
++  - an optional hard terrain requirement on the 5 m sites (unknown terrain is insufficient data, never a pass);
++  - soft preference weights with a visible normalised score and contributions;
++  - deterministic ties;
++  - URL persistence;
++  - a downloadable reproducible scenario and results;
++  - "Open in 3D terrain".
++- **Default weights** reproduce the previous ranking exactly.
++- **End to end on real data:** Shackleton Rim fails the illustrative terrain screen (0 %), while Nobile Rim 1 passes (99.5 %). The ranking re-derives independently from the downloaded components.
++
++See [Milestone 6 acceptance](MILESTONE6_ACCEPTANCE.md).
++
++## Milestone 5: completed (preserved)
+ 
+ - **Verified existing:** planner horizon masks (240 m, 250 km, exact sphere, 2 m observer), both visibility models, partial-disc handling, combined timelines and blackout metrics, and the AVGVISIB overlays.
+ - **Added:** time-dependent sunlight and Earth line-of-sight layers on the 3D terrain sites (single and compare views), plus NASA's 20 m PSR map as static context.
+diff --git a/milestones/README.md b/milestones/README.md
+index 7960571..7cae616 100644
+--- a/milestones/README.md
++++ b/milestones/README.md
+@@ -7,6 +7,7 @@ The complete working project is at the repository root. These files preserve the
+ - `MILESTONE_3.patch`: the Milestone 3 commit after `0eabd44` (multi-site terrain and dual 3D comparison), with binary terrain layers.
+ - `MILESTONE_4.patch`: the Milestone 4 commit after `3b43df0` (astronomy audit, validation and gap fixes).
+ - `MILESTONE_5.patch`: the Milestone 5 commit after `09f42c0` (terrain-aware sunlight and Earth line of sight), with binary illumination inputs.
+-- Separate acceptance reports: `docs/MILESTONE1_ACCEPTANCE.md` to `docs/MILESTONE5_ACCEPTANCE.md`.
++- `MILESTONE_6.patch`: the Milestone 6 commit after `ac22e2f` (explainable mission-date recommendation).
++- Separate acceptance reports: `docs/MILESTONE1_ACCEPTANCE.md` to `docs/MILESTONE6_ACCEPTANCE.md`.
+ 
+ Use `git am` on the corresponding base only when recovering a missing milestone. Do not apply these patches to this final repository: their commits are already ancestors of main. The original complete Milestone 1 ZIP remains at the root for existing download links.
+diff --git a/tests/e2e/finder_test.py b/tests/e2e/finder_test.py
+new file mode 100644
+index 0000000..4a0a018
+--- /dev/null
++++ b/tests/e2e/finder_test.py
+@@ -0,0 +1,124 @@
++"""Milestone 6 end-to-end: two-site Mission Window Finder workflow on real NASA/JPL data.
++
++Usage: python tests/e2e/finder_test.py [base_url]
++Shackleton Rim (PGDA Site04 DEM centre) vs Nobile Rim 1 (Site06 DEM centre), 14-day missions in January 2027, with an
++illustrative terrain requirement (not a NASA standard). Checks: terrain screen equals an independent numpy count on the
++shipped 5 m layers; terrain decides pass/fail; unknown terrain is insufficient data; the score breakdown sums to the
++score; the downloaded scenario's ranking is re-derived independently from its own reported components; choosing a
++window updates the shared site/date state in other workspaces.
++"""
++import json, math, re, sys
++from pathlib import Path
++import numpy as np
++from playwright.sync_api import expect, sync_playwright
++
++BASE = sys.argv[1] if len(sys.argv) > 1 else 'http://localhost:4173/'
++ROOT = Path(__file__).resolve().parents[2]
++WEB = ROOT / 'web/public/data/terrain'
++R = 1737400.0
++SLOPE, ROUGH, RADIUS, MINPCT = 20, 1, 100, 90
++
++
++def independent_meets_pct(site_id, lat, lon):
++    m = json.loads((WEB / site_id / 'hazards/hazards.json').read_text())
++    t = json.loads((WEB / site_id / 'terrain.json').read_text())
++    s = np.frombuffer((WEB / site_id / 'hazards/slope.u16').read_bytes(), '<u2').reshape(m['height'], m['width'])
++    g = np.frombuffer((WEB / site_id / 'hazards/roughness.u16').read_bytes(), '<u2').reshape(m['height'], m['width'])
++    la, lo = math.radians(lat), math.radians(lon)
++    k = 2 * R * math.tan(math.pi / 4 + la / 2)
++    x, y = k * math.sin(lo), k * math.cos(lo)
++    z = np.frombuffer((WEB / site_id / t['assets']['surf']['file']).read_bytes(), '<f4').reshape(t['height'], t['width'])
++    c, r = (x - t['x0']) / t['dx'], (y - t['y0']) / t['dy']
++    c0, r0 = int(c), int(r)
++    fc, fr = c - c0, r - r0
++    h = (z[r0, c0] * (1 - fc) + z[r0, c0 + 1] * fc) * (1 - fr) + (z[r0 + 1, c0] * (1 - fc) + z[r0 + 1, c0 + 1] * fc) * fr
++    rr = RADIUS * (1 + (x * x + y * y) / (4 * R * R)) / (1 + h / R)
++    cols = m['x0'] + np.arange(m['width']) * m['dx']
++    rows = m['y0'] + np.arange(m['height']) * m['dy']
++    inside = (cols[None, :] - x) ** 2 + (rows[:, None] - y) ** 2 <= rr ** 2
++    sv, gv = s[inside], g[inside]
++    assert (sv != m['noData']).all() and (gv != m['noData']).all()
++    return 100 * float(np.mean((sv * m['quantum'] <= SLOPE) & (gv * m['quantum'] <= ROUGH)))
++
++
++sites = {s['id']: s for s in json.loads((ROOT / 'web/public/data/sites.json').read_text())['sites']}
++expected = {sid: independent_meets_pct(t, sites[sid]['lat'], sites[sid]['lon']) for sid, t in (('shackleton-rim-site04', 'site04'), ('nobile-rim-1-site06', 'site06'))}
++print('independent terrain share', expected)
++
++with sync_playwright() as p:
++    b = p.chromium.launch(headless=True, args=['--enable-unsafe-swiftshader'])
++    ctx = b.new_context(viewport={'width': 1440, 'height': 1000}, accept_downloads=True)
++    page = ctx.new_page()
++    console = []
++    page.on('console', lambda m: console.append((m.type, m.text)) if m.type in ('error', 'warning') else None)
++    page.on('pageerror', lambda e: console.append(('pageerror', str(e))))
++    page.goto(BASE + '#ws=finder&a=shackleton-rim-site04&b=nobile-rim-1-site06&d=14&ss=2027-01-01T00:00Z&se=2027-01-15T00:00Z'
++              f'&rs=0&re=0&rd=2000&rb=2000&rj=&tr={SLOPE},{ROUGH},{RADIUS},{MINPCT}&w=0,0,1,0,0,1')
++    expect(page.get_by_label('Require a suitable terrain footprint')).to_be_checked()
++    page.get_by_role('radio', name='Site A and B').click()
++    page.get_by_role('button', name='Find mission windows').click()
++    table = page.locator('table.results')
++    expect(table.locator('tbody tr').first).to_be_visible(timeout=60000)
++
++    def rows_for(name):
++        page.locator('.list-tools select').nth(1).select_option(label=next(o for o in page.locator('.list-tools select').nth(1).locator('option').all_inner_texts() if o.startswith(name)))
++        return table.locator('tbody tr').all()
++
++    for name, sid in (('Shackleton Rim', 'shackleton-rim-site04'), ('Nobile Rim 1', 'nobile-rim-1-site06')):
++        rs = rows_for(name)
++        assert rs, name
++        terr = rs[0].locator('td').nth(8).inner_text()
++        got = float(re.match(r'([\d.]+)', terr).group(1))
++        assert abs(got - expected[sid]) <= 0.6, (name, got, expected[sid])  # display rounds to whole %
++        statuses = {r.locator('td').nth(10).inner_text().strip() for r in rs}
++        if expected[sid] >= MINPCT:
++            assert any('Meets requirements' in s for s in statuses), statuses
++        else:
++            assert not any('Meets requirements' in s for s in statuses), statuses
++    page.locator('.list-tools select').nth(1).select_option('all')
++    # top-ranked row explains its score; contributions sum to the score
++    table.locator('tbody tr').first.get_by_role('button', name='Why this window?').click()
++    br = page.get_by_test_id('score-breakdown')
++    expect(br).to_be_visible()
++    contrib = [float(r.locator('td').nth(2).inner_text()) for r in br.locator('tbody tr').all()]
++    score = float(re.search(r'Preference score ([\d.]+)', page.locator('.why').inner_text()).group(1))
++    assert abs(sum(contrib) - score) < 0.002, (contrib, score)
++    # downloaded scenario: independent re-derivation of the ranking from its own components
++    with page.expect_download() as dl:
++        page.get_by_role('button', name='Download scenario and results (JSON)').click()
++    data = json.loads(Path(dl.value.path()).read_text())
++    assert data['inputs']['hardRequirements']['terrain'] == {'maxSlopeDeg': SLOPE, 'maxRoughM': ROUGH, 'radiusM': RADIUS, 'minMeetsPct': MINPCT}
++    order = {'meets': 0, 'partial': 1, 'fails': 2, 'insufficient': 3}
++    w = data['inputs']['softPreferenceWeights']
++    for c in data['candidates']:
++        m = c['metrics']
++        parts = [(w['joint'], m['jointPct'] / 100)] + ([(w['terrain'], c['terrainMeetsPct'] / 100)] if c['terrainMeetsPct'] is not None else [])
++        s = sum(a * v for a, v in parts) / sum(a for a, _ in parts)
++        assert abs(s - c['score']) < 1e-9, c
++        assert (c['status'] == 'meets') == all(k['pass'] for k in c['checks'])  # pass/fail independent of sort order
++    resorted = sorted(data['candidates'], key=lambda c: (order[c['status']], c['failedRequirements'], -(c['score'] if c['score'] is not None else -1),
++                                                        c['metrics']['longestDarkH'], c['startUtc'], c['site']))
++    assert [c['rank'] for c in resorted] == list(range(1, len(resorted) + 1))
++    # choosing a recommendation updates shared state in the other workspaces
++    nobile = [r for r in rows_for('Nobile Rim 1')][0]
++    start = nobile.locator('td').nth(1).inner_text()
++    nobile.get_by_role('button', name='Why this window?').click()
++    page.get_by_role('button', name='Open in 3D terrain').click()
++    expect(page).to_have_url(re.compile(r'ws=terrain.*a=nobile-rim-1-site06'))
++    expect(page.get_by_test_id('sky-readout')).to_contain_text(start[:10], timeout=30000)
++    # all listed sites: sites without processed 5 m terrain are insufficient data with the reason
++    page.get_by_role('button', name='Mission Window Finder', exact=True).click()
++    page.get_by_role('radio', name=re.compile('^All .* listed sites')).click()
++    page.get_by_role('button', name=re.compile('Recalculate|Find mission windows')).click()
++    expect(table.locator('tbody tr').first).to_be_visible(timeout=90000)
++    page.locator('.list-tools select').nth(1).select_option(label='Apollo 11, Tranquility Base')
++    first = table.locator('tbody tr').first
++    expect(first.locator('td').nth(10)).to_contain_text('Insufficient data')
++    expect(first.locator('td').nth(8)).to_have_text('Unknown')
++    first.get_by_role('button', name='Why this window?').click()
++    expect(page.get_by_test_id('why-insufficient')).to_contain_text('No processed 5 m terrain covers')
++    bad = [m for m in console if not (m[0] == 'warning' and 'GPU stall due to ReadPixels' in m[1])]
++    assert not bad, bad
++    print(f"PASS two-site finder workflow on real data: terrain {expected}, {len(data['candidates'])} candidates re-ranked independently, "
++          'score breakdown, shared-state hand-off, insufficient terrain elsewhere')
++    b.close()
+diff --git a/web/src/lib/finder.ts b/web/src/lib/finder.ts
+index ff05ca9..b644121 100644
+--- a/web/src/lib/finder.ts
++++ b/web/src/lib/finder.ts
+@@ -1,5 +1,19 @@
+ // Mission Window Finder: evaluate candidate (site, start) pairs against user requirements.
+ // Pure functions over hourly visibility flags (1 h half-open samples). No React.
++// Milestone 6 added: an optional hard terrain requirement (processed 5 m sites only; unknown terrain is
++// "insufficient data", never a pass) and soft preference weights with a visible, normalized score.
++
++/** Optional hard terrain requirement, screened on the processed 5 m sites (Milestones 2–3 estimators). */
++export interface TerrainReq {
++  /** maximum 3 × 3 OLS slope (degrees, 15 m support) */
++  maxSlopeDeg: number
++  /** maximum 5 × 5 detrended RMS roughness (m, 25 m support) */
++  maxRoughM: number
++  /** circular footprint radius (m) around the site location */
++  radiusM: number
++  /** minimum share of valid native samples in the footprint meeting both limits (%) */
++  minMeetsPct: number
++}
+ 
+ export interface Requirements {
+   minSunPct: number
+@@ -8,10 +22,61 @@ export interface Requirements {
+   minJointPct: number | null
+   maxDarkH: number
+   maxBlackoutH: number
++  /** null or absent = no terrain requirement */
++  terrain?: TerrainReq | null
+ }
+ 
+ /** Illustrative defaults: hypothetical mission constraints, not NASA engineering standards. */
+-export const DEFAULT_REQ: Requirements = { minSunPct: 50, minEarthPct: 60, minJointPct: null, maxDarkH: 72, maxBlackoutH: 48 }
++export const DEFAULT_REQ: Requirements = {
++  minSunPct: 50,
++  minEarthPct: 60,
++  minJointPct: null,
++  maxDarkH: 72,
++  maxBlackoutH: 48,
++  terrain: null,
++}
++export const DEFAULT_TERRAIN_REQ: TerrainReq = { maxSlopeDeg: 10, maxRoughM: 0.3, radiusM: 100, minMeetsPct: 90 }
++
++/**
++ * Terrain screen of one site (time-independent), computed by the caller from the 5 m layers.
++ * `meetsPct` null = unknown (no processed terrain, or part of the footprint lacks data): never a pass.
++ */
++export interface TerrainScreen {
++  meetsPct: number | null
++  reason: string
++  /** NASA PGDA product used, when known */
++  product?: string
++}
++
++/** Soft preferences: non-negative weights; they only order candidates within the same requirement status. */
++export interface Weights {
++  sun: number
++  earth: number
++  joint: number
++  dark: number
++  blackout: number
++  terrain: number
++}
++/** Default reproduces the pre-Milestone-6 ranking (more time with Sun and Earth together first). */
++export const DEFAULT_WEIGHTS: Weights = { sun: 0, earth: 0, joint: 1, dark: 0, blackout: 0, terrain: 0 }
++export const WEIGHT_LABEL: Record<keyof Weights, string> = {
++  sun: 'Sunlight share',
++  earth: 'Earth visibility share',
++  joint: 'Sun and Earth together',
++  dark: 'Short longest darkness',
++  blackout: 'Short longest blackout',
++  terrain: 'Terrain footprint meeting limits',
++}
++
++export interface Contribution {
++  key: keyof Weights
++  label: string
++  weight: number
++  /** normalized metric 0..1, or null when unavailable (then excluded from the score) */
++  normalized: number | null
++  /** weight × normalized ÷ sum of the used weights */
++  contribution: number
++}
+ 
+ export type Status = 'meets' | 'partial' | 'fails' | 'insufficient'
+ 
+@@ -198,9 +263,23 @@ export function checksFor(m: Metrics, r: Requirements): Check[] {
+   return c
+ }
+ 
++/** Hard terrain check, or the reason it cannot be evaluated (then the candidate is insufficient data). */
++export function terrainCheck(req: TerrainReq, t: TerrainScreen | undefined): Check | { unknown: string } {
++  if (!t || t.meetsPct === null) return { unknown: t?.reason ?? 'No terrain screen is available for this site.' }
++  return {
++    key: 'terrain',
++    label: 'Terrain footprint',
++    limit: req.minMeetsPct,
++    actual: t.meetsPct,
++    unit: '%',
++    kind: 'min',
++    pass: t.meetsPct >= req.minMeetsPct,
++  }
++}
++
+ /**
+  * Status rule (documented in the UI):
+- *  - insufficient: the mission would extend outside the supported data
++ *  - insufficient: the mission would extend outside the supported data, or a required metric is unknown
+  *  - meets: every active requirement passes
+  *  - partial: at least one fails, but no more than half of the active requirements
+  *  - fails: more than half of the active requirements fail
+@@ -211,6 +290,34 @@ export function statusFor(checks: Check[]): Exclude<Status, 'insufficient'> {
+   return failed <= Math.floor(checks.length / 2) ? 'partial' : 'fails'
+ }
+ 
++/**
++ * Transparent preference score: score = Σ wₖ·nₖ ÷ Σ wₖ over components with weight > 0 and a known value.
++ * nₖ: sun / earth / joint share ÷ 100; dark and blackout 1 − longest ÷ mission length; terrain share meeting ÷ 100.
++ */
++export function scoreFor(
++  m: Metrics,
++  terrain: TerrainScreen | undefined,
++  w: Weights,
++): { score: number | null; contributions: Contribution[] } {
++  const norm: Record<keyof Weights, number | null> = {
++    sun: m.sunPct / 100,
++    earth: m.earthPct / 100,
++    joint: m.jointPct / 100,
++    dark: 1 - m.longestDarkH / m.hours,
++    blackout: 1 - m.longestBlackoutH / m.hours,
++    terrain: terrain && terrain.meetsPct !== null ? terrain.meetsPct / 100 : null,
++  }
++  const keys = Object.keys(WEIGHT_LABEL) as (keyof Weights)[]
++  const total = keys.filter((k) => w[k] > 0 && norm[k] !== null).reduce((s, k) => s + w[k], 0)
++  const contributions = keys
++    .filter((k) => w[k] > 0)
++    .map((k) => {
++      const n = norm[k]
++      return { key: k, label: WEIGHT_LABEL[k], weight: w[k], normalized: n, contribution: total > 0 && n !== null ? (w[k] * n) / total : 0 }
++    })
++  return { score: total > 0 ? contributions.reduce((s, c) => s + c.contribution, 0) : null, contributions }
++}
++
+ export interface Candidate {
+   siteId: string
+   startIndex: number
+@@ -220,6 +327,12 @@ export interface Candidate {
+   failed: number
+   checks: Check[]
+   metrics: Metrics | null
++  /** why the candidate is 'insufficient' */
++  reason?: string
++  terrain?: TerrainScreen
++  /** weighted preference score 0..1 (null when no weight applies) */
++  score: number | null
++  contributions: Contribution[]
+ }
+ 
+ export interface SearchInput {
+@@ -233,6 +346,9 @@ export interface SearchInput {
+   everyH: number
+   durationH: number
+   req: Requirements
++  /** per-site terrain screens (used by req.terrain and the terrain preference) */
++  terrain?: Record<string, TerrainScreen>
++  weights?: Weights
+ }
+ 
+ export function search(inp: SearchInput): Candidate[] {
+@@ -240,24 +356,49 @@ export function search(inp: SearchInput): Candidate[] {
+   const first = Math.ceil((inp.searchStartMs - inp.t0Ms) / inp.stepMs)
+   const last = Math.floor((inp.searchEndMs - inp.t0Ms) / inp.stepMs)
+   for (const p of inp.sites) {
++    const t = inp.terrain?.[p.siteId]
+     for (let i = first; i <= last; i += inp.everyH) {
+       const startMs = inp.t0Ms + i * inp.stepMs
+       const endMs = startMs + inp.durationH * inp.stepMs
+       if (i < 0 || i + inp.durationH > p.n) {
+-        out.push({ siteId: p.siteId, startIndex: i, startMs, endMs, status: 'insufficient', failed: 0, checks: [], metrics: null })
++        out.push({
++          siteId: p.siteId,
++          startIndex: i,
++          startMs,
++          endMs,
++          status: 'insufficient',
++          failed: 0,
++          checks: [],
++          metrics: null,
++          reason: 'The mission would run outside the supported ephemeris data.',
++          terrain: t,
++          score: null,
++          contributions: [],
++        })
+         continue
+       }
+       const m = metricsAt(p, i, inp.durationH)
+       const checks = checksFor(m, inp.req)
++      let reason: string | undefined
++      if (inp.req.terrain) {
++        const tc = terrainCheck(inp.req.terrain, t)
++        if ('unknown' in tc) reason = tc.unknown
++        else checks.push(tc)
++      }
++      const sc = scoreFor(m, t, inp.weights ?? DEFAULT_WEIGHTS)
+       out.push({
+         siteId: p.siteId,
+         startIndex: i,
+         startMs,
+         endMs,
+-        status: statusFor(checks),
++        // a required metric that cannot be evaluated makes the candidate insufficient data, never a pass
++        status: reason ? 'insufficient' : statusFor(checks),
+         failed: checks.filter((c) => !c.pass).length,
+         checks,
+         metrics: m,
++        reason,
++        terrain: t,
++        ...sc,
+       })
+     }
+   }
+@@ -270,18 +411,20 @@ const ORDER: Record<Status, number> = { meets: 0, partial: 1, fails: 2, insuffic
+  * Transparent ranking, hard requirements first:
+  *  1. status (meets > partial > does not meet > insufficient data)
+  *  2. fewer failed requirements
+- *  3. more time with Sun and Earth together
++ *  3. higher preference score (default weights: Sun and Earth together only, the pre-Milestone-6 order)
+  *  4. shorter longest darkness
+- *  5. earlier start
++ *  5. earlier start, then site id (fully deterministic)
++ * Preferences never move a candidate across a status or failed-count boundary.
+  */
+ export function rank(c: Candidate[]): Candidate[] {
+   return [...c].sort(
+     (a, b) =>
+       ORDER[a.status] - ORDER[b.status] ||
+       a.failed - b.failed ||
+-      (b.metrics?.jointPct ?? -1) - (a.metrics?.jointPct ?? -1) ||
++      (b.score ?? -1) - (a.score ?? -1) ||
+       (a.metrics?.longestDarkH ?? 1e9) - (b.metrics?.longestDarkH ?? 1e9) ||
+-      a.startMs - b.startMs,
++      a.startMs - b.startMs ||
++      (a.siteId < b.siteId ? -1 : a.siteId > b.siteId ? 1 : 0),
+   )
+ }
+ 
+@@ -289,6 +432,10 @@ export function rank(c: Candidate[]): Candidate[] {
+ export function checkSentence(c: Check): string {
+   const a = c.unit === '%' ? `${Math.round(c.actual)} %` : `${c.actual} h`
+   const l = c.unit === '%' ? `${c.limit} %` : `${c.limit} h`
++  if (c.key === 'terrain')
++    return c.pass
++      ? `${a} of the terrain footprint meets the slope and roughness limits, meeting the minimum of ${l}.`
++      : `Only ${a} of the terrain footprint meets the slope and roughness limits, below the required minimum of ${l}.`
+   if (c.kind === 'min')
+     return c.pass
+       ? `${c.label} is ${a} of mission time, meeting the minimum of ${l}.`
+diff --git a/web/src/lib/finderRanking.test.ts b/web/src/lib/finderRanking.test.ts
+new file mode 100644
+index 0000000..704dcbd
+--- /dev/null
++++ b/web/src/lib/finderRanking.test.ts
+@@ -0,0 +1,193 @@
++// Milestone 6: hard terrain requirement, soft preference weights and an independent re-derivation of the ranking.
++import { describe, expect, it } from 'vitest'
++import {
++  DEFAULT_REQ,
++  DEFAULT_WEIGHTS,
++  prepare,
++  rank,
++  scoreFor,
++  search,
++  terrainCheck,
++  type Candidate,
++  type Requirements,
++  type TerrainScreen,
++  type Weights,
++} from './finder'
++import { NO_TERRAIN, terrainScreenFrom, type FootprintDetail } from './terrainCompare'
++
++const flags = (pattern: string) => Uint8Array.from(pattern.split('').map((c) => (c === '1' ? 1 : 0)))
++const site = (id: string, sun: string, earth: string) => prepare({ siteId: id, sun: flags(sun), earth: flags(earth) })
++const H = 3_600_000
++const base = (over: Partial<Parameters<typeof search>[0]> = {}) =>
++  search({
++    sites: [site('a', '111100001111', '111111110000'), site('b', '110011001100', '101010101010')],
++    t0Ms: 0,
++    stepMs: H,
++    searchStartMs: 0,
++    searchEndMs: 4 * H,
++    everyH: 1,
++    durationH: 8,
++    req: { ...DEFAULT_REQ, minSunPct: 0, minEarthPct: 0, maxDarkH: 100, maxBlackoutH: 100 },
++    ...over,
++  })
++const known = (pct: number): TerrainScreen => ({ meetsPct: pct, reason: 'test', product: 'SiteX' })
++const terrainReq = (minMeetsPct: number): Requirements => ({
++  ...DEFAULT_REQ,
++  minSunPct: 0,
++  minEarthPct: 0,
++  maxDarkH: 100,
++  maxBlackoutH: 100,
++  terrain: { maxSlopeDeg: 10, maxRoughM: 0.3, radiusM: 100, minMeetsPct },
++})
++
++describe('hard terrain requirement', () => {
++  it('passes and fails exactly at the boundary', () => {
++    const r = terrainReq(90)
++    const at = terrainCheck(r.terrain!, known(90))
++    const below = terrainCheck(r.terrain!, known(89.999))
++    expect('pass' in at && at.pass).toBe(true)
++    expect('pass' in below && below.pass).toBe(false)
++  })
++  it('missing terrain makes every candidate at that site insufficient data with the reason, never a pass', () => {
++    const res = base({ req: terrainReq(0), terrain: { a: known(100), b: NO_TERRAIN('Site B') } })
++    const b = res.filter((c) => c.siteId === 'b')
++    expect(b.every((c) => c.status === 'insufficient')).toBe(true)
++    expect(b[0].reason).toMatch(/never reused/)
++    expect(res.filter((c) => c.siteId === 'a').every((c) => c.status === 'meets')).toBe(true)
++    // insufficient candidates still sort after every evaluated one
++    expect(res.findIndex((c) => c.status === 'insufficient')).toBe(res.filter((c) => c.status !== 'insufficient').length)
++  })
++  it('partial footprint coverage is unknown, not favourable', () => {
++    const d = { valid: 900, total: 1000, meetsPct: 100, coveragePct: 90, radiusM: 100 } as FootprintDetail
++    const s = terrainScreenFrom(d, 'Site04', 'Shackleton Rim')
++    expect(s.meetsPct).toBeNull()
++    expect(s.reason).toMatch(/900 of 1000/)
++    expect(terrainScreenFrom(null, 'Site04', 'x').meetsPct).toBeNull()
++    expect(terrainScreenFrom({ ...d, valid: 1000 }, 'Site04', 'x').meetsPct).toBe(100)
++  })
++  it('a terrain failure counts as a failed hard requirement', () => {
++    const res = base({ req: terrainReq(95), terrain: { a: known(50), b: known(99) } })
++    for (const c of res.filter((x) => x.siteId === 'a')) {
++      expect(c.checks.find((k) => k.key === 'terrain')!.pass).toBe(false)
++      expect(c.status).not.toBe('meets')
++    }
++  })
++  it('no feasible window: nothing is marked as meeting', () => {
++    const res = base({ req: { ...terrainReq(100), minSunPct: 100, minEarthPct: 100 }, terrain: { a: known(80), b: known(80) } })
++    expect(res.some((c) => c.status === 'meets')).toBe(false)
++  })
++})
++
++describe('soft preference score', () => {
++  const m = { hours: 10, sunPct: 80, earthPct: 40, jointPct: 30, longestDarkH: 2, longestBlackoutH: 5 } as Parameters<typeof scoreFor>[0]
++  it('is the weighted mean of normalized components with visible contributions', () => {
++    const w: Weights = { sun: 2, earth: 1, joint: 0, dark: 1, blackout: 0, terrain: 0 }
++    const r = scoreFor(m, undefined, w)
++    expect(r.score).toBeCloseTo((2 * 0.8 + 1 * 0.4 + 1 * (1 - 2 / 10)) / 4, 12)
++    expect(r.contributions.map((c) => c.key)).toEqual(['sun', 'earth', 'dark'])
++    expect(r.contributions.reduce((s, c) => s + c.contribution, 0)).toBeCloseTo(r.score!, 12)
++  })
++  it('excludes an unknown terrain component instead of treating it as zero or one', () => {
++    const r = scoreFor(m, { meetsPct: null, reason: 'x' }, { ...DEFAULT_WEIGHTS, joint: 1, terrain: 1 })
++    expect(r.score).toBeCloseTo(0.3, 12)
++    expect(r.contributions.find((c) => c.key === 'terrain')!.normalized).toBeNull()
++  })
++  it('no weights: no score, deterministic tie-breaks', () => {
++    const r = scoreFor(m, undefined, { sun: 0, earth: 0, joint: 0, dark: 0, blackout: 0, terrain: 0 })
++    expect(r.score).toBeNull()
++  })
++  it('default weights reproduce the pre-Milestone-6 order (status, failures, joint %, darkness, start)', () => {
++    const res = base()
++    const old = [...res].sort(
++      (a, b) =>
++        ['meets', 'partial', 'fails', 'insufficient'].indexOf(a.status) - ['meets', 'partial', 'fails', 'insufficient'].indexOf(b.status) ||
++        a.failed - b.failed ||
++        (b.metrics?.jointPct ?? -1) - (a.metrics?.jointPct ?? -1) ||
++        (a.metrics?.longestDarkH ?? 1e9) - (b.metrics?.longestDarkH ?? 1e9) ||
++        a.startMs - b.startMs ||
++        a.siteId.localeCompare(b.siteId),
++    )
++    expect(res.map((c) => `${c.siteId}@${c.startMs}`)).toEqual(old.map((c) => `${c.siteId}@${c.startMs}`))
++  })
++  it('changing weights reorders only within the same status; pass/fail is unaffected', () => {
++    const req: Requirements = { ...DEFAULT_REQ, minSunPct: 50, minEarthPct: 0, maxDarkH: 100, maxBlackoutH: 100 }
++    const a = base({ req })
++    const b = base({ req, weights: { sun: 0, earth: 5, joint: 0, dark: 0, blackout: 1, terrain: 0 } })
++    const st = (r: Candidate[]) => Object.fromEntries(r.map((c) => [`${c.siteId}@${c.startMs}`, [c.status, c.failed]]))
++    expect(st(b)).toEqual(st(a))
++    const order = ['meets', 'partial', 'fails', 'insufficient']
++    for (const r of [a, b])
++      for (let i = 1; i < r.length; i++) expect(order.indexOf(r[i].status)).toBeGreaterThanOrEqual(order.indexOf(r[i - 1].status))
++  })
++  it('ties are broken deterministically (darkness, start, site id)', () => {
++    const twin = [site('z', '1111', '1111'), site('y', '1111', '1111')]
++    const res = search({ sites: twin, t0Ms: 0, stepMs: H, searchStartMs: 0, searchEndMs: 0, everyH: 1, durationH: 4, req: DEFAULT_REQ })
++    expect(res.map((c) => c.siteId)).toEqual(['y', 'z'])
++    expect(res[0].score).toBe(res[1].score)
++  })
++  it('independently re-derives the ranking from the reported components', () => {
++    const w: Weights = { sun: 1, earth: 1, joint: 2, dark: 1, blackout: 1, terrain: 0 }
++    const res = base({ weights: w })
++    // recompute each score from the displayed metrics only, then sort by the documented rule
++    const re = res.map((c) => {
++      const m = c.metrics!
++      const s =
++        (w.sun * m.sunPct) / 100 +
++        (w.earth * m.earthPct) / 100 +
++        (w.joint * m.jointPct) / 100 +
++        w.dark * (1 - m.longestDarkH / m.hours) +
++        w.blackout * (1 - m.longestBlackoutH / m.hours)
++      expect(c.score).toBeCloseTo(s / 6, 12)
++      return { c, s: s / 6 }
++    })
++    const sorted = [...re].sort(
++      (x, y) => x.c.failed - y.c.failed || y.s - x.s || x.c.metrics!.longestDarkH - y.c.metrics!.longestDarkH || x.c.startMs - y.c.startMs,
++    )
++    expect(rank(res).map((c) => c.siteId + c.startMs)).toEqual(sorted.map((x) => x.c.siteId + x.c.startMs))
++  })
++})
++
++describe('dates and blackout', () => {
++  it('out-of-range starts are insufficient with a reason; exact-fit end is evaluated', () => {
++    const res = search({
++      sites: [site('a', '11110000', '11111111')],
++      t0Ms: 0,
++      stepMs: H,
++      searchStartMs: -2 * H,
++      searchEndMs: 5 * H,
++      everyH: 1,
++      durationH: 4,
++      req: DEFAULT_REQ,
++    })
++    const by = Object.fromEntries(res.map((c) => [c.startIndex, c]))
++    expect(by[-1].status).toBe('insufficient')
++    expect(by[-1].reason).toMatch(/outside the supported/)
++    expect(by[4].status).not.toBe('insufficient') // [4, 8) fits exactly
++    expect(by[5].status).toBe('insufficient')
++  })
++  it('blackout duration at the limit passes, one hour more fails', () => {
++    const p = site('a', '11111111', '11000111') // 3 h blackout
++    const at = search({
++      sites: [p],
++      t0Ms: 0,
++      stepMs: H,
++      searchStartMs: 0,
++      searchEndMs: 0,
++      everyH: 1,
++      durationH: 8,
++      req: { ...DEFAULT_REQ, minSunPct: 0, minEarthPct: 0, maxBlackoutH: 3 },
++    })
++    const over = search({
++      sites: [p],
++      t0Ms: 0,
++      stepMs: H,
++      searchStartMs: 0,
++      searchEndMs: 0,
++      everyH: 1,
++      durationH: 8,
++      req: { ...DEFAULT_REQ, minSunPct: 0, minEarthPct: 0, maxBlackoutH: 2 },
++    })
++    expect(at[0].checks.find((c) => c.key === 'maxBlackoutH')!.pass).toBe(true)
++    expect(over[0].checks.find((c) => c.key === 'maxBlackoutH')!.pass).toBe(false)
++  })
++})
+diff --git a/web/src/lib/state.test.ts b/web/src/lib/state.test.ts
+index aa8c018..070af11 100644
+--- a/web/src/lib/state.test.ts
++++ b/web/src/lib/state.test.ts
+@@ -13,10 +13,26 @@ describe('shared mission state in the URL', () => {
+       mode: 'explore' as const,
+       tz: 'local' as const,
+       vis: 'geometric' as const,
+-      req: { minSunPct: 40, minEarthPct: 70, minJointPct: 25, maxDarkH: 12, maxBlackoutH: 6 },
++      req: {
++        minSunPct: 40,
++        minEarthPct: 70,
++        minJointPct: 25,
++        maxDarkH: 12,
++        maxBlackoutH: 6,
++        terrain: { maxSlopeDeg: 12, maxRoughM: 0.25, radiusM: 150, minMeetsPct: 80 },
++      },
++      weights: { sun: 1, earth: 2, joint: 0, dark: 0.5, blackout: 3, terrain: 1 },
+     }
+     expect(fromHash(toHash(s))).toEqual(s)
+   })
++  it('keeps old links valid: missing terrain/weights fall back, invalid values are ignored (Milestone 6)', () => {
++    const old = fromHash('#ws=finder&rs=40&re=70&rd=12&rb=6')
++    expect(old.req.terrain).toBeNull()
++    expect(old.weights).toEqual(DEFAULT_STATE.weights)
++    expect(fromHash('#tr=5,0.2,1,90').req.terrain).toBeNull() // radius below 5 m
++    expect(fromHash('#w=1,1,1,1,1,-1').weights).toEqual(DEFAULT_STATE.weights)
++    expect(fromHash('#tr=').req.terrain).toBeNull()
++  })
+   it('keeps the optional joint requirement switched off', () => {
+     expect(fromHash(toHash(DEFAULT_STATE)).req.minJointPct).toBeNull()
+   })
+diff --git a/web/src/lib/state.ts b/web/src/lib/state.ts
+index 907e845..9e2fc1f 100644
+--- a/web/src/lib/state.ts
++++ b/web/src/lib/state.ts
+@@ -1,5 +1,5 @@
+ // One shared mission state for every workspace, mirrored in the URL (pure helpers, unit-tested).
+-import { DEFAULT_REQ, type Requirements } from './finder'
++import { DEFAULT_REQ, DEFAULT_WEIGHTS, type Requirements, type Weights } from './finder'
+ import type { TimeZoneMode } from './format'
+ import type { Mode } from './prefs'
+ import type { VisModel } from './visibility'
+@@ -19,6 +19,8 @@ export interface MissionState {
+   searchStart: number
+   searchEnd: number
+   req: Requirements
++  /** Mission Window Finder soft preferences (Milestone 6) */
++  weights: Weights
+   ws: Workspace
+   mode: Mode
+   tz: TimeZoneMode
+@@ -40,6 +42,7 @@ export const DEFAULT_STATE: MissionState = {
+   searchStart: Date.parse('2026-11-14T00:00:00Z'),
+   searchEnd: Date.parse('2027-02-14T00:00:00Z'),
+   req: DEFAULT_REQ,
++  weights: DEFAULT_WEIGHTS,
+   ws: 'home',
+   mode: 'planner',
+   tz: 'utc',
+@@ -74,6 +77,10 @@ export function toHash(s: MissionState): string {
+     rj: s.req.minJointPct === null ? '' : String(s.req.minJointPct),
+     rd: String(s.req.maxDarkH),
+     rb: String(s.req.maxBlackoutH),
++    tr: s.req.terrain
++      ? [s.req.terrain.maxSlopeDeg, s.req.terrain.maxRoughM, s.req.terrain.radiusM, s.req.terrain.minMeetsPct].join(',')
++      : '',
++    w: [s.weights.sun, s.weights.earth, s.weights.joint, s.weights.dark, s.weights.blackout, s.weights.terrain].join(','),
+     mode: s.mode,
+     tz: s.tz,
+     vis: s.vis,
+@@ -81,6 +88,33 @@ export function toHash(s: MissionState): string {
+   return `#${p.toString()}`
+ }
+ 
++/** "slope,rough,radius,minPct" (all finite, in range) or '' for no terrain requirement. */
++function parseTerrain(v: string | null, base: Requirements['terrain']): Requirements['terrain'] {
++  if (v === null) return base ?? null
++  if (v === '') return null
++  const x = v.split(',').map(Number)
++  const ok =
++    x.length === 4 &&
++    x.every(Number.isFinite) &&
++    x[0] >= 0 &&
++    x[0] <= 90 &&
++    x[1] >= 0 &&
++    x[1] <= 100 &&
++    x[2] >= 5 &&
++    x[2] <= 2000 &&
++    x[3] >= 0 &&
++    x[3] <= 100
++  return ok ? { maxSlopeDeg: x[0], maxRoughM: x[1], radiusM: x[2], minMeetsPct: x[3] } : (base ?? null)
++}
++
++/** Six non-negative weights (sun, earth, joint, dark, blackout, terrain), each at most 10. */
++function parseWeights(v: string | null, base: Weights): Weights {
++  if (!v) return base
++  const x = v.split(',').map(Number)
++  if (x.length !== 6 || !x.every((n) => Number.isFinite(n) && n >= 0 && n <= 10)) return base
++  return { sun: x[0], earth: x[1], joint: x[2], dark: x[3], blackout: x[4], terrain: x[5] }
++}
++
+ /** Parse a hash into a full state, falling back to `base` for anything missing or invalid. */
+ export function fromHash(hash: string, base: MissionState = DEFAULT_STATE): MissionState {
+   const p = new URLSearchParams(hash.replace(/^#/, ''))
+@@ -102,7 +136,9 @@ export function fromHash(hash: string, base: MissionState = DEFAULT_STATE): Miss
+       minJointPct: rj === '' ? null : (num(rj, 0, 100) ?? base.req.minJointPct),
+       maxDarkH: num(p.get('rd'), 0, 2000) ?? base.req.maxDarkH,
+       maxBlackoutH: num(p.get('rb'), 0, 2000) ?? base.req.maxBlackoutH,
++      terrain: parseTerrain(p.get('tr'), base.req.terrain ?? null),
+     },
++    weights: parseWeights(p.get('w'), base.weights),
+     ws: ws && WORKSPACES.includes(ws) ? ws : base.ws,
+     mode: p.get('mode') === 'explore' ? 'explore' : p.get('mode') === 'planner' ? 'planner' : base.mode,
+     tz: p.get('tz') === 'local' ? 'local' : p.get('tz') === 'utc' ? 'utc' : base.tz,
+diff --git a/web/src/lib/terrainCompare.ts b/web/src/lib/terrainCompare.ts
+index 114793e..a97b8fb 100644
+--- a/web/src/lib/terrainCompare.ts
++++ b/web/src/lib/terrainCompare.ts
+@@ -3,6 +3,7 @@
+ import { classify, criteriaValid, footprint, valuesAtIndex, type Criteria, type HazardData } from './hazardAnalysis'
+ import { polarXY } from './terrain'
+ import type { TerrainAsset } from './terrainMesh'
++import type { TerrainScreen } from './finder'
+ 
+ export const SLOPE_BINS = [0, 5, 10, 15, 20, 30, 90] as const
+ 
+@@ -221,3 +222,28 @@ export const classifyIndex = (hz: HazardData, i: number, c: Criteria) => {
+   const v = valuesAtIndex(hz, i)
+   return classify(v.slope, v.roughness, c)
+ }
++
++/**
++ * Milestone 6: finder terrain screen from an equal-footprint measurement. Any unavailable sample in the footprint
++ * makes the terrain unknown (never a pass); only processed 5 m sites can be screened.
++ */
++export function terrainScreenFrom(d: FootprintDetail | null, product: string, siteName: string): TerrainScreen {
++  if (!d)
++    return { meetsPct: null, reason: `The terrain footprint at ${siteName} could not be evaluated (radius must be 5–2000 m).`, product }
++  if (d.valid < d.total || d.meetsPct === null)
++    return {
++      meetsPct: null,
++      reason: `Only ${d.valid} of ${d.total} native 5 m samples in the ${d.radiusM} m footprint at ${siteName} have data (${d.coveragePct.toFixed(1)} % coverage).`,
++      product,
++    }
++  return {
++    meetsPct: d.meetsPct,
++    reason: `${d.meetsPct.toFixed(1)} % of ${d.valid} native 5 m samples meet both limits (NASA PGDA ${product}).`,
++    product,
++  }
++}
++
++export const NO_TERRAIN = (siteName: string): TerrainScreen => ({
++  meetsPct: null,
++  reason: `No processed 5 m terrain covers ${siteName}, so slope and roughness are unknown there (terrain from other sites is never reused).`,
++})
+diff --git a/web/src/workspaces/MissionFinder.tsx b/web/src/workspaces/MissionFinder.tsx
+index 8c4e438..b0f69d0 100644
+--- a/web/src/workspaces/MissionFinder.tsx
++++ b/web/src/workspaces/MissionFinder.tsx
+@@ -1,6 +1,23 @@
+ import { useEffect, useMemo, useRef, useState } from 'react'
+ import { hourly, makeCtx } from '../lib/analysis'
+-import { type Candidate, type Requirements, STATUS_LABEL, type Status, checkSentence, prepare, search } from '../lib/finder'
++import {
++  type Candidate,
++  type Requirements,
++  STATUS_LABEL,
++  type Status,
++  type TerrainReq,
++  type TerrainScreen,
++  type Weights,
++  DEFAULT_TERRAIN_REQ,
++  WEIGHT_LABEL,
++  checkSentence,
++  prepare,
++  search,
++} from '../lib/finder'
++import type { Site } from '../lib/data'
++import { loadSiteLayers } from '../lib/terrainCache'
++import { footprintDetail, NO_TERRAIN, terrainScreenFrom } from '../lib/terrainCompare'
++import { loadTerrainIndex, sampleGrid, terrainSiteFor } from '../lib/terrainMesh'
+ import { fmtHours, fmtPct, fmtTime, fromInputValue, toInputValue } from '../lib/format'
+ import { INFO } from '../lib/glossary'
+ import { DURATIONS } from '../lib/state'
+@@ -8,7 +25,42 @@ import { DAY, HOUR, useStore } from '../lib/store'
+ import { MODEL_LABEL } from '../lib/visibility'
+ import { Icon, InfoTip } from '../components/ui'
+ 
+-type SortKey = 'rank' | 'start' | 'sun' | 'earth' | 'joint' | 'dark' | 'blackout'
++type SortKey = 'rank' | 'start' | 'sun' | 'earth' | 'joint' | 'dark' | 'blackout' | 'score'
++
++/** Screen each site's 5 m terrain footprint (Milestones 2–3 estimators); sites without processed terrain are unknown. */
++async function terrainScreens(list: Site[], req: TerrainReq): Promise<Record<string, TerrainScreen>> {
++  const index = await loadTerrainIndex()
++  const out: Record<string, TerrainScreen> = {}
++  for (const x of list) {
++    const info = terrainSiteFor(index.sites, x.id, x.lat, x.lon)
++    if (!info) {
++      out[x.id] = NO_TERRAIN(x.name)
++      continue
++    }
++    const { asset, hazards } = await loadSiteLayers(info.id)
++    const h = sampleGrid(asset, x.lat, x.lon)
++    if (h === null) {
++      out[x.id] = NO_TERRAIN(x.name)
++      continue
++    }
++    const d = footprintDetail(hazards, asset, { lat: x.lat, lon: x.lon }, h, req.radiusM, {
++      slope: req.maxSlopeDeg,
++      roughness: req.maxRoughM,
++    })
++    out[x.id] = terrainScreenFrom(d, info.product, x.name)
++  }
++  return out
++}
++
++/** Reproducible scenario + results as a JSON download (inputs, method, sources, every candidate's numbers). */
++function downloadScenario(payload: unknown) {
++  const blob = new Blob([JSON.stringify(payload, null, 1)], { type: 'application/json' })
++  const a = document.createElement('a')
++  a.href = URL.createObjectURL(blob)
++  a.download = 'lunawindow-mission-windows.json'
++  a.click()
++  window.setTimeout(() => URL.revokeObjectURL(a.href), 1000)
++}
+ const STATUS_ORDER: Status[] = ['meets', 'partial', 'fails', 'insufficient']
+ 
+ function StatusChip({ status }: { status: Status }) {
+@@ -66,7 +118,7 @@ export default function MissionFinder() {
+   const [scope, setScope] = useState<'all' | 'pair'>('all')
+   const [everyH, setEveryH] = useState(6)
+   const [results, setResults] = useState<Candidate[] | null>(null)
+-  const [runInfo, setRunInfo] = useState<{ req: Requirements; durationDays: number; ms: number } | null>(null)
++  const [runInfo, setRunInfo] = useState<{ req: Requirements; weights: Weights; durationDays: number; ms: number } | null>(null)
+   const [busy, setBusy] = useState(false)
+   const [error, setError] = useState<string | null>(null)
+   const [filter, setFilter] = useState<Status | 'all'>('all')
+@@ -82,11 +134,21 @@ export default function MissionFinder() {
+     if (!(span >= 0)) return setError('The latest start must be on or after the earliest start.')
+     if (span > 366 * DAY) return setError('Please search at most one year at a time.')
+     setBusy(true)
+-    window.setTimeout(() => {
++    window.setTimeout(async () => {
+       const t = performance.now()
+       const list = (
+         scope === 'all' ? sites.filter((x) => !x.custom || x.id === s.siteA || x.id === s.siteB) : [site(s.siteA), site(s.siteB)]
+       ).filter((x, i, arr) => arr.findIndex((y) => y.id === x.id) === i)
++      let screens: Record<string, TerrainScreen> | undefined
++      if (s.req.terrain) {
++        try {
++          screens = await terrainScreens(list, s.req.terrain)
++        } catch (e) {
++          setError(`Terrain data could not be loaded (${(e as Error).message}). Turn off the terrain requirement or retry.`)
++          setBusy(false)
++          return
++        }
++      }
+       const prepared = list.map((x) => {
+         const h = hourly(makeCtx(x, data.sites.azStepDeg), data.eph, s.vis)
+         return prepare({ siteId: x.id, sun: h.sun, earth: h.earth })
+@@ -100,9 +162,11 @@ export default function MissionFinder() {
+         everyH,
+         durationH: s.durationDays * 24,
+         req: s.req,
++        terrain: screens,
++        weights: s.weights,
+       })
+       setResults(res)
+-      setRunInfo({ req: s.req, durationDays: s.durationDays, ms: performance.now() - t })
++      setRunInfo({ req: s.req, weights: s.weights, durationDays: s.durationDays, ms: performance.now() - t })
+       setShown(25)
+       setWhy(null)
+       setBusy(false)
+@@ -136,6 +200,7 @@ export default function MissionFinder() {
+       joint: (a, b) => m(b, (x) => x.jointPct, -1) - m(a, (x) => x.jointPct, -1),
+       dark: (a, b) => m(a, (x) => x.longestDarkH, 1e9) - m(b, (x) => x.longestDarkH, 1e9),
+       blackout: (a, b) => m(a, (x) => x.longestBlackoutH, 1e9) - m(b, (x) => x.longestBlackoutH, 1e9),
++      score: (a, b) => (b.score ?? -1) - (a.score ?? -1),
+     }
+     if (by[sort]) r = [...r].sort(by[sort]!)
+     return r
+@@ -166,7 +231,67 @@ export default function MissionFinder() {
+     setWhy(c)
+     window.setTimeout(() => whyRef.current?.focus(), 0)
+   }
+-  const stale = runInfo && (JSON.stringify(runInfo.req) !== JSON.stringify(s.req) || runInfo.durationDays !== s.durationDays)
++  const stale =
++    runInfo &&
++    (JSON.stringify(runInfo.req) !== JSON.stringify(s.req) ||
++      JSON.stringify(runInfo.weights) !== JSON.stringify(s.weights) ||
++      runInfo.durationDays !== s.durationDays)
++  const setTerrain = (patch: Partial<TerrainReq>) => setReq({ terrain: { ...(s.req.terrain ?? DEFAULT_TERRAIN_REQ), ...patch } })
++  const setWeight = (k: keyof Weights, v: number) => set({ weights: { ...s.weights, [k]: v } })
++  const exportScenario = () =>
++    results &&
++    runInfo &&
++    downloadScenario({
++      app: 'LunaWindow Mission Window Finder',
++      generatedUtc: new Date().toISOString(),
++      link: window.location.href,
++      inputs: {
++        searchStartUtc: new Date(s.searchStart).toISOString(),
++        searchEndUtc: new Date(s.searchEnd).toISOString(),
++        durationDays: runInfo.durationDays,
++        candidateSpacingH: everyH,
++        visibilityModel: MODEL_LABEL[s.vis],
++        hardRequirements: runInfo.req,
++        softPreferenceWeights: runInfo.weights,
++      },
++      method: {
++        sampling: 'hourly half-open samples; durations in whole hours (±1 h)',
++        status:
++          'insufficient: outside ephemeris data or a required metric unknown; meets: all hard requirements pass; partial: ≤ half fail; fails: more than half fail',
++        score: 'Σ w·n / Σ w; n = share/100 for sun, earth, joint, terrain; 1 − longest/mission for darkness and blackout',
++        ranking: 'status, failed count, score (desc), longest darkness (asc), start, site id',
++        terrain:
++          'NASA PGDA product 78 5 m DEMs, 3×3 OLS slope (15 m), 5×5 detrended RMS roughness (25 m), sample-centre circular footprint',
++      },
++      sources: [
++        'NASA/JPL Horizons API (DE441)',
++        'LRO LOLA LDEM_75S_240M / LDEM_16 (PDS)',
++        'NASA GSFC PGDA product 78 (Barker et al. 2021)',
++      ],
++      disclaimer:
++        'Illustrative user-configured constraints, not NASA mission standards. Line of sight does not guarantee power, communication or a safe landing.',
++      candidates: results.map((c, i) => ({
++        rank: i + 1,
++        site: c.siteId,
++        startUtc: new Date(c.startMs).toISOString(),
++        endUtc: new Date(c.endMs).toISOString(),
++        status: c.status,
++        failedRequirements: c.failed,
++        reason: c.reason ?? null,
++        score: c.score,
++        contributions: c.contributions,
++        metrics: c.metrics && {
++          sunPct: c.metrics.sunPct,
++          earthPct: c.metrics.earthPct,
++          jointPct: c.metrics.jointPct,
++          longestDarkH: c.metrics.longestDarkH,
++          longestBlackoutH: c.metrics.longestBlackoutH,
++          linkInterruptions: c.metrics.linkInterruptions,
++        },
++        terrainMeetsPct: c.terrain?.meetsPct ?? null,
++        checks: c.checks.map((k) => ({ key: k.key, limit: k.limit, actual: k.actual, pass: k.pass })),
++      })),
++    })
+ 
+   return (
+     <div className="workspace finder-ws">
+@@ -271,6 +396,77 @@ export default function MissionFinder() {
+             max={2000}
+             onChange={(v) => setReq({ maxBlackoutH: v })}
+           />
++          <fieldset className="field">
++            <legend className="field-label">Terrain requirement (hard)</legend>
++            <label className="toggle">
++              <input
++                type="checkbox"
++                checked={!!s.req.terrain}
++                onChange={(e) => setReq({ terrain: e.target.checked ? DEFAULT_TERRAIN_REQ : null })}
++              />{' '}
++              Require a suitable terrain footprint
++            </label>
++            {s.req.terrain && (
++              <>
++                <NumberField
++                  label="Maximum slope"
++                  hint="3 × 3 OLS, 15 m"
++                  value={s.req.terrain.maxSlopeDeg}
++                  unit="°"
++                  min={0}
++                  max={90}
++                  onChange={(v) => setTerrain({ maxSlopeDeg: v })}
++                />
++                <NumberField
++                  label="Maximum roughness"
++                  hint="RMS, 25 m"
++                  value={s.req.terrain.maxRoughM}
++                  unit="m"
++                  min={0}
++                  max={100}
++                  onChange={(v) => setTerrain({ maxRoughM: v })}
++                />
++                <NumberField
++                  label="Footprint radius"
++                  value={s.req.terrain.radiusM}
++                  unit="m"
++                  min={5}
++                  max={2000}
++                  onChange={(v) => setTerrain({ radiusM: v })}
++                />
++                <NumberField
++                  label="Footprint share meeting both"
++                  value={s.req.terrain.minMeetsPct}
++                  unit="%"
++                  min={0}
++                  max={100}
++                  onChange={(v) => setTerrain({ minMeetsPct: v })}
++                />
++                <p className="hint">
++                  Only sites inside processed NASA 5 m terrain (Connecting Ridge, Shackleton Rim, Nobile Rim 1) can be screened. Every other
++                  site is shown as insufficient data, never as passing. Limits are illustrative, not NASA landing standards.
++                </p>
++              </>
++            )}
++          </fieldset>
++          <fieldset className="field">
++            <legend className="field-label">Preferences (soft, order windows within the same status)</legend>
++            {(Object.keys(WEIGHT_LABEL) as (keyof Weights)[]).map((k) => (
++              <NumberField
++                key={k}
++                label={`Weight: ${WEIGHT_LABEL[k]}`}
++                value={s.weights[k]}
++                unit="×"
++                min={0}
++                max={10}
++                onChange={(v) => setWeight(k, v)}
++                hint={k === 'terrain' && !s.req.terrain ? 'needs the terrain requirement' : undefined}
++              />
++            ))}
++            <p className="hint">
++              Score = Σ weight × normalized value ÷ Σ weights. Preferences never turn a failing window into a passing one.
++            </p>
++          </fieldset>
+           <div className="field">
+             <span className="field-label">Sites to search</span>
+             <div className="seg full" role="radiogroup" aria-label="Sites to search">
+@@ -440,6 +636,7 @@ export default function MissionFinder() {
+                   <option value="joint">Sun and Earth together</option>
+                   <option value="dark">Shortest darkness</option>
+                   <option value="blackout">Shortest blackout</option>
++                  <option value="score">Preference score</option>
+                 </select>
+               </label>
+             </div>
+@@ -456,6 +653,8 @@ export default function MissionFinder() {
+                     <th scope="col">Both</th>
+                     <th scope="col">Max darkness</th>
+                     <th scope="col">Max blackout</th>
++                    <th scope="col">Terrain</th>
++                    <th scope="col">Score</th>
+                     <th scope="col">Status</th>
+                     <th scope="col">
+                       <span className="sr-only">Explain</span>
+@@ -473,6 +672,8 @@ export default function MissionFinder() {
+                       <td className="num">{c.metrics ? fmtPct(c.metrics.jointPct) : '—'}</td>
+                       <td className="num">{c.metrics ? fmtHours(c.metrics.longestDarkH) : '—'}</td>
+                       <td className="num">{c.metrics ? fmtHours(c.metrics.longestBlackoutH) : '—'}</td>
++                      <td className="num">{c.terrain ? (c.terrain.meetsPct === null ? 'Unknown' : fmtPct(c.terrain.meetsPct)) : '—'}</td>
++                      <td className="num">{c.score === null ? '—' : c.score.toFixed(3)}</td>
+                       <td>
+                         <StatusChip status={c.status} />
+                       </td>
+@@ -492,10 +693,15 @@ export default function MissionFinder() {
+               </button>
+             )}
+             <p className="hint">
+-              Ranking: status first (meets, partially meets, does not meet, insufficient data), then fewer failed requirements, then more
+-              time with Sun and Earth together, then a shorter longest darkness, then the earlier start. “Partially meets” means at most
+-              half of the active requirements fail; more than half failing is “does not meet”.
++              Ranking: status first (meets, partially meets, does not meet, insufficient data), then fewer failed requirements, then the
++              preference score (Σ weight × normalized value ÷ Σ weights; by default only “Sun and Earth together”), then a shorter longest
++              darkness, then the earlier start. “Partially meets” means at most half of the active requirements fail; more than half failing
++              is “does not meet”. Insufficient data means the mission leaves the supported dates or a required metric (such as terrain) is
++              unknown.
+             </p>
++            <button type="button" className="btn" onClick={exportScenario}>
++              Download scenario and results (JSON)
++            </button>
+           </>
+         )}
+         {why && results && <WhyPanel c={why} all={results} innerRef={whyRef} onClose={() => setWhy(null)} />}
+@@ -534,7 +740,7 @@ function WhyPanel({
+         ? m.darkSpan
+         : (m.darkSpan ?? m.blackoutSpan))
+ 
+-  const open = (ws: 'compare' | 'surface', at: number) =>
++  const open = (ws: 'compare' | 'surface' | 'terrain', at: number) =>
+     set({
+       ws,
+       siteA: c.siteId,
+@@ -557,12 +763,16 @@ function WhyPanel({
+       <p>
+         <StatusChip status={c.status} /> Ranked {rank} of {all.length} candidates.
+       </p>
+-      {c.status === 'insufficient' ? (
++      {c.status === 'insufficient' && !m ? (
+         <p>
+           The {Math.round((c.endMs - c.startMs) / DAY)}-day mission would run outside the supported data (
+           {fmtTime(data.eph.meta.startMs, 'utc', false)} to {fmtTime(data.eph.endMs, 'utc', false)}). Missing data is never treated as
+           favourable, so this start cannot be evaluated.
+         </p>
++      ) : c.status === 'insufficient' ? (
++        <p data-testid="why-insufficient">
++          {c.reason} Missing data is never treated as favourable, so this window is not ranked as passing.
++        </p>
+       ) : (
+         m && (
+           <>
+@@ -574,6 +784,32 @@ function WhyPanel({
+                 </li>
+               ))}
+             </ul>
++            {c.contributions.length > 0 && (
++              <>
++                <h4>Preference score {c.score === null ? '(not available)' : c.score.toFixed(3)}</h4>
++                <table className="cmp-table" data-testid="score-breakdown">
++                  <thead>
++                    <tr>
++                      <th scope="col">Preference</th>
++                      <th scope="col">Weight</th>
++                      <th scope="col">Normalized value</th>
++                      <th scope="col">Contribution</th>
++                    </tr>
++                  </thead>
++                  <tbody>
++                    {c.contributions.map((k) => (
++                      <tr key={k.key}>
++                        <th scope="row">{k.label}</th>
++                        <td className="num">{k.weight}</td>
++                        <td className="num">{k.normalized === null ? 'Unknown (excluded)' : k.normalized.toFixed(3)}</td>
++                        <td className="num">{k.contribution.toFixed(3)}</td>
++                      </tr>
++                    ))}
++                  </tbody>
++                </table>
++              </>
++            )}
++            {c.terrain && <p className="hint">Terrain: {c.terrain.reason}</p>}
+             <h4>Most favourable period</h4>
+             <p>
+               {m.jointSpan
+@@ -627,6 +863,14 @@ function WhyPanel({
+         <button type="button" className="btn" onClick={() => open('surface', c.startMs)} disabled={!m}>
+           Open in Surface View
+         </button>
++        <button
++          type="button"
++          className="btn"
++          onClick={() => open('terrain', c.startMs)}
++          disabled={!m || !c.terrain || c.terrain.meetsPct === null}
++        >
++          Open in 3D terrain
++        </button>
+         <button type="button" className="btn" onClick={() => critical && open('compare', idx(critical.startIndex))} disabled={!critical}>
+           Jump to the most critical interruption
+         </button>
+-- 
+2.46.0.windows.1
+

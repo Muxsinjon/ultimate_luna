@@ -1,0 +1,135 @@
+{
+ "version": 1,
+ "siteId": "site01",
+ "generated": "2026-11-15T00:34:13+00:00",
+ "layers": [
+  {
+   "kind": "model",
+   "width": 101,
+   "height": 101,
+   "stride": 4,
+   "offset": 0,
+   "noData": 65535,
+   "resolutionM": 500,
+   "period": "Thermal-model fits to Diviner observations from the first mapping year (2009\u20132010)",
+   "source": {
+    "title": "LRO Diviner Polar Resource Products (LRO-L-DLRE-5-PRP-V2.0)",
+    "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.tab",
+    "label": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.xml",
+    "citation": "Paige et al. (2010), Science 330; Paige et al., LRO DLRE Level 5 PRP V2.0, NASA PDS (2018)",
+    "sha256": "393deaa5d8925d45bb2ed608f937a824f5eae029c2558aad1d2da8206b83a62d",
+    "bytes": 604800210
+   },
+   "caveats": [
+    "Model-derived from a thermal model fitted to the first mapping year; not a direct measurement or a forecast for a mission date.",
+    "Triangular facets of about 0.5 km on a Kaguya-derived polar DEM; registration to the LOLA 5 m terrain is not independently verified.",
+    "Values are uniform within each facet: they do not resolve the 20 m mesh."
+   ],
+   "id": "diviner-tmax",
+   "title": "Diviner annual maximum surface temperature (model)",
+   "quantity": "temperature",
+   "unit": "K",
+   "scale": 0.01,
+   "file": "diviner-tmax.u16",
+   "sha256": "3c21eb2d1953af075bd0f9be9aa436565ac9b12f29515d67077cc09f37179205",
+   "validPct": 100.0,
+   "min": 63.803,
+   "max": 300.136,
+   "legend": {
+    "min": 40,
+    "max": 320,
+    "palette": "thermal"
+   }
+  },
+  {
+   "kind": "model",
+   "width": 101,
+   "height": 101,
+   "stride": 4,
+   "offset": 0,
+   "noData": 65535,
+   "resolutionM": 500,
+   "period": "Thermal-model fits to Diviner observations from the first mapping year (2009\u20132010)",
+   "source": {
+    "title": "LRO Diviner Polar Resource Products (LRO-L-DLRE-5-PRP-V2.0)",
+    "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.tab",
+    "label": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.xml",
+    "citation": "Paige et al. (2010), Science 330; Paige et al., LRO DLRE Level 5 PRP V2.0, NASA PDS (2018)",
+    "sha256": "393deaa5d8925d45bb2ed608f937a824f5eae029c2558aad1d2da8206b83a62d",
+    "bytes": 604800210
+   },
+   "caveats": [
+    "Model-derived from a thermal model fitted to the first mapping year; not a direct measurement or a forecast for a mission date.",
+    "Triangular facets of about 0.5 km on a Kaguya-derived polar DEM; registration to the LOLA 5 m terrain is not independently verified.",
+    "Values are uniform within each facet: they do not resolve the 20 m mesh."
+   ],
+   "id": "diviner-tavg",
+   "title": "Diviner annual average temperature at 2 cm depth (model)",
+   "quantity": "temperature",
+   "unit": "K",
+   "scale": 0.01,
+   "file": "diviner-tavg.u16",
+   "sha256": "fbf2bcff26a8563dfa15ea3a9c29947618f3c0c7c6c0791edff687b233cc4249",
+   "validPct": 100.0,
+   "min": 47.699,
+   "max": 154.637,
+   "legend": {
+    "min": 40,
+    "max": 320,
+    "palette": "thermal"
+   }
+  },
+  {
+   "kind": "model",
+   "width": 101,
+   "height": 101,
+   "stride": 4,
+   "offset": 0,
+   "noData": 65535,
+   "resolutionM": 500,
+   "period": "Thermal-model fits to Diviner observations from the first mapping year (2009\u20132010)",
+   "source": {
+    "title": "LRO Diviner Polar Resource Products (LRO-L-DLRE-5-PRP-V2.0)",
+    "url": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.tab",
+    "label": "https://pds-geosciences.wustl.edu/lro/urn-nasa-pds-lro_diviner_derived1/data_derived_prp/dlre_prp_south.xml",
+    "citation": "Paige et al. (2010), Science 330; Paige et al., LRO DLRE Level 5 PRP V2.0, NASA PDS (2018)",
+    "sha256": "393deaa5d8925d45bb2ed608f937a824f5eae029c2558aad1d2da8206b83a62d",
+    "bytes": 604800210
+   },
+   "caveats": [
+    "Model-derived from a thermal model fitted to the first mapping year; not a direct measurement or a forecast for a mission date.",
+    "Triangular facets of about 0.5 km on a Kaguya-derived polar DEM; registration to the LOLA 5 m terrain is not independently verified.",
+    "Values are uniform within each facet: they do not resolve the 20 m mesh.",
+    "Indicates where water ice WOULD be thermally stable if present; it is not evidence that ice is there."
+   ],
+   "id": "diviner-ice",
+   "title": "Diviner depth to stable water ice (model)",
+   "quantity": "depth",
+   "unit": "m",
+   "scale": 0.001,
+   "file": "diviner-ice.u16",
+   "sha256": "7f3f78983c19f30dc06d6095f1f96bb2fa3066224bec7e7de894a3495f7b76a8",
+   "validPct": 41.79982354671111,
+   "min": 1e-05,
+   "max": 1.23189,
+   "legend": {
+    "min": 0,
+    "max": 2.8738,
+    "palette": "ice"
+   },
+   "specials": [
+    {
+     "value": 65534,
+     "label": "No stable ice within 2.87 m of the surface (model)",
+     "pct": 56.455249485344574
+    },
+    {
+     "value": 65533,
+     "label": "Source code -1 (not defined in the PDS label; not interpreted)",
+     "pct": 1.7449269679443193
+    }
+   ]
+  }
+ ],
+ "notChecked": "LEND, Mini-RF, M3 and CRaTER are not integrated; see docs/MILESTONE8_ACCEPTANCE.md"
+}

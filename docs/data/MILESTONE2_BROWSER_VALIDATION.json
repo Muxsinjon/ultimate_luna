@@ -1,0 +1,20 @@
+{
+  "observed": {
+    "slope": 1.8760000000000001,
+    "roughness": 0.10400000000000001
+  },
+  "maxDifferenceFromFloat32Rasters": {
+    "slope": 0.00047390365600574746,
+    "roughness": 0.00031407707929612116
+  },
+  "independent100mDiskSamples": 1260,
+  "cameraPreserved": true,
+  "footprintSummaryDifferences": {
+    "slope_min": 0.00010608857870102184,
+    "slope_mean": 4.216900369335974e-06,
+    "slope_max": 0.0003078536987306535,
+    "roughness_min": 0.00018232952058315488,
+    "roughness_mean": 1.013602603763819e-05,
+    "roughness_max": 0.00045771741867067783
+  }
+}

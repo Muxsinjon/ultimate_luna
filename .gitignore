@@ -1,0 +1,8 @@
+*.pyc
+.DS_Store
+__pycache__/
+node_modules/
+pipeline/.venv/
+pipeline/out/
+pipeline/raw/
+web/dist/
